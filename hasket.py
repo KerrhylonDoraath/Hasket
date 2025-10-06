@@ -10,27 +10,119 @@ import tkinter.filedialog
 import threading
 
 #Title of the open file
-FILE_TITLE = "Untitled"
 MODIFIED = False
 WINDOW_TITLE = ""
 #MODE sets the usage of the text widget
 MODE = "TERMINAL"
 INITIAL_TEXT = ""
 
-#INITIALISING THE WINDOW
-root = Tk()
-root.geometry("800x500")
-root.config(bg="#404040")
-root.iconbitmap("HASKET.ico")
+def importScript(scriptName):
+    with open(scriptName, "r") as importText:
+        pass
+
+class EditorText():
+    def __init__(self, master):
+        self.MODE = "UNDEFINED"
+
+class EditorFile(EditorText):
+    def __init__(self, master):
+        self.MODE = "EDITOR"
+        self.__modified = False
+
+        self.__secondaryTextWidget = Text(master, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
+        self.__secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
+        self.__secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
+        self.__secondaryTextWidget.bind("<Key>", ModifiedText)
+
+        self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__secondaryTextWidget.yview)
+        #self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
+        self.__secondaryTextWidget.config(yscrollcommand=self.__mScrollbar.set)
+
+        
+    def setModified(self, modified):
+        self.__modified = modified
+
+    def getModified(self):
+        return self.__modified
+
+class EditorTerminalOut(EditorText):
+    def __init__(self, master):
+        self.MODE = "TERMINAL"
+
+        self.__mainTextWidget = Text(master, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
+        self.__mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
+        self.__mainTextWidget.bind("<Return>", lambda event: retrieveInput(False))
+
+        self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__mainTextWidget.yview)
+        self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
+        self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
+
+class HasketWindow():
+    def __init__(self):
+        self.__fileTitle = "Untitled"
+
+        #INITIALISING THE WINDOW
+        self.__root = Tk()
+        self.__root.geometry("800x500")
+        self.__root.config(bg="#404040")
+        self.__root.iconbitmap("HASKET.ico")
+
+        #drawing window geometry
+        self.__mainFrame = Frame(self.__root, bg="#000080")
+        self.__mainFrame.pack(pady=(20, 0), expand=False, fill=X, padx=30)
+
+        self.__TerminalLabel = Label(self.__mainFrame, text="TERMINAL", bg="white", highlightthickness=0)
+        self.__TerminalLabel.pack(side=LEFT, padx=2, pady=2)
+        self.__TerminalLabel.bind("<Button-1>", lambda event: swapMode("TERMINAL"))
+
+        self.__EditorLabel = Label(self.__mainFrame, text="EDITOR", bg="#D0D0D0", highlightthickness=0)
+        self.__EditorLabel.pack(side=LEFT, padx=2, pady=2)
+        self.__EditorLabel.bind("<Button-1>", lambda event: swapMode("EDITOR"))
+
+        self.__textWidgetFrame = Frame(self.__root, bg="#000080")
+        self.__textWidgetFrame.pack(side=BOTTOM, padx=30, expand=True, fill=BOTH, pady=(0, 30))
+
+        self.__BlankEntry = Frame(self.__mainFrame, bg="#808080")
+        self.__BlankEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=2, pady=2)
+
+        self.__terminal = EditorTerminalOut(self.__textWidgetFrame)
+        self.__editor = EditorFile(self.__textWidgetFrame)
+
+        self.__root.bind("<Control-Tab>", lambda event: swapMode("EDITOR" if MODE == "TERMINAL" else "TERMINAL"))
+        self.__root.bind("<Control-o>", importScriptEntry)
+        self.__root.bind("<Control-n>", lambda event: newScript())
+
+        #MENU CONFIGURATION
+        self.__mainMenu = Menu(tearoff=0)
+        self.__fileMenu = Menu(self.__mainMenu, tearoff=0) 
+        self.__mainMenu.add_cascade(menu=self.__fileMenu, label="File")
+
+        #File Menu
+        self.__fileMenu.add_command(label="New Script", command=newScript)
+        self.__fileMenu.add_command(label="Open Script", command=importScriptEntry)
+        self.__fileMenu.add_separator()
+        self.__fileMenu.add_command(label="Save", command=lambda: saveScript(FILE_TITLE))
+        self.__fileMenu.add_command(label="Save As", command=lambda: saveScript(saveAsScript))
+        self.__fileMenu.add_separator()
+        self.__fileMenu.add_command(label="Exit", command=self.__root.destroy)
+        self.__root.config(menu=self.__mainMenu)
+
+
+    def setFileTitle(self, fileTitle):
+        self.__root.title(CreateWindowTitle(fileTitle))
+        
+
 
 #IMPORTING HASKELL SCRIPT
-def importScriptEntry(*ignore):
+def importScriptEntry(*ignore, HasketWindow):
     if SaveCheck():
         saveScript()
     mFile = tkinter.filedialog.askopenfile(filetypes=[("Haskell Scripts", ".hs")])
     if not mFile:
         return
     importScript(mFile.name)
+
+
 
 def importScript(scriptName):
     global FILE_TITLE, secondaryTextWidget, mainTextWidget, INITIAL_TEXT
@@ -50,10 +142,9 @@ def importScript(scriptName):
 
 #Create Window Title
 def CreateWindowTitle(scriptName):
-    global WINDOW_TITLE, root
     originalTitle = "Hasket 1.0"
-    WINDOW_TITLE = f"{scriptName} - {originalTitle}"
-    root.title(WINDOW_TITLE)
+    returnTitle = f"{scriptName} - {originalTitle}"
+    return returnTitle
 
 #Modified event callback
 def ModifiedText(*ignore):
@@ -151,60 +242,12 @@ def retrieveInput(addNewLine=False):
 
 #SYNTAX HIGHLIGHTING
 
-#drawing window geometry
-mainFrame = Frame(root, bg="#000080")
-mainFrame.pack(pady=(20, 0), expand=False, fill=X, padx=30)
+mWindow = HasketWindow()
+mWindow.setFileTitle("Untitled")
+    
+"""
 
-TerminalLabel = Label(mainFrame, text="TERMINAL", bg="white", highlightthickness=0)
-TerminalLabel.pack(side=LEFT, padx=2, pady=2)
-TerminalLabel.bind("<Button-1>", lambda event: swapMode("TERMINAL"))
-
-EditorLabel = Label(mainFrame, text="EDITOR", bg="#D0D0D0", highlightthickness=0)
-EditorLabel.pack(side=LEFT, padx=2, pady=2)
-EditorLabel.bind("<Button-1>", lambda event: swapMode("EDITOR"))
-
-BlankEntry = Frame(mainFrame, bg="#808080")
-BlankEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=2, pady=2)
-
-textWidgetFrame = Frame(root, bg="#000080")
-textWidgetFrame.pack(side=BOTTOM, padx=30, expand=True, fill=BOTH, pady=(0, 30))
-
-secondaryTextWidget = Text(textWidgetFrame, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
-secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
-secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
-secondaryTextWidget.bind("<Key>", ModifiedText)
-
-mainTextWidget = Text(textWidgetFrame, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
-mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-mainTextWidget.bind("<Return>", lambda event: retrieveInput(False))
-
-
-root.bind("<Control-Tab>", lambda event: swapMode("EDITOR" if MODE == "TERMINAL" else "TERMINAL"))
-root.bind("<Control-o>", importScriptEntry)
-root.bind("<Control-n>", lambda event: newScript())
-
-mScrollbar = Scrollbar(textWidgetFrame, orient=VERTICAL, width=20, command=mainTextWidget.yview)
-mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
-mainTextWidget.config(yscrollcommand=mScrollbar.set)
-
-#MENU CONFIGURATION
-mainMenu = Menu(tearoff=0)
-fileMenu = Menu(mainMenu, tearoff=0) 
-mainMenu.add_cascade(menu=fileMenu, label="File")
-
-#File Menu
-fileMenu.add_command(label="New Script", command=newScript)
-fileMenu.add_command(label="Open Script", command=importScriptEntry)
-fileMenu.add_separator()
-fileMenu.add_command(label="Save", command=lambda: saveScript(FILE_TITLE))
-fileMenu.add_command(label="Save As", command=lambda: saveScript(saveAsScript))
-fileMenu.add_separator()
-fileMenu.add_command(label="Exit", command=root.destroy)
-root.config(menu=mainMenu)
-
-CreateWindowTitle("Untitled")
-
-mProcess = subprocess.Popen(["bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+mProcess = subprocess.Popen(["C:\\HASKELL\\bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 RUNNING = True
 t1 = threading.Thread(target = updater)
 t1.start()
@@ -222,4 +265,4 @@ try:
     mProcess.stdin.flush()
 except OSError:
     pass
-mProcess.kill()
+mProcess.kill()"""
