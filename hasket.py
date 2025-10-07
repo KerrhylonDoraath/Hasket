@@ -23,22 +23,36 @@ def importScript(scriptName):
 class EditorText():
     def __init__(self, master):
         self.MODE = "UNDEFINED"
+        self.__master = master
+
+    def loadPanel(self):
+        pass
+
+    def unloadPanel(self):
+        pass
 
 class EditorFile(EditorText):
     def __init__(self, master):
         self.MODE = "EDITOR"
-        self.__modified = False
 
+        self.__modified = False
         self.__secondaryTextWidget = Text(master, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
         self.__secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
         self.__secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
-        self.__secondaryTextWidget.bind("<Key>", ModifiedText)
+        #self.__secondaryTextWidget.bind("<Key>", ModifiedText)
 
         self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__secondaryTextWidget.yview)
-        #self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
         self.__secondaryTextWidget.config(yscrollcommand=self.__mScrollbar.set)
 
-        
+    def loadPanel(self):
+        self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
+        self.__secondaryTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
+        self.__secondaryTextWidget.focus()
+
+    def unloadPanel(self):
+        self.__secondaryTextWidget.pack_forget()
+        self.__mScrollbar.pack_forget()
+
     def setModified(self, modified):
         self.__modified = modified
 
@@ -49,16 +63,33 @@ class EditorTerminalOut(EditorText):
     def __init__(self, master):
         self.MODE = "TERMINAL"
 
-        self.__mainTextWidget = Text(master, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
-        self.__mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
+        self.__microFrame = Frame(master, highlightthickness=0, highlightcolor = "#000080")
+        self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
         self.__mainTextWidget.bind("<Return>", lambda event: retrieveInput(False))
 
-        self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__mainTextWidget.yview)
-        self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
+        self.__entryLine = Text(master, height=1, bg="black", fg="white", highlightthickness=1, highlightcolor = "white", insertbackground="white")
+
+        self.__mScrollbar = Scrollbar(self.__microFrame, orient=VERTICAL, width=20, command=self.__mainTextWidget.yview)
         self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
+
+
+    def loadPanel(self):
+        self.__microFrame.pack(expand=True, fill=BOTH, padx=2, pady=(0, 2))
+        self.__entryLine.pack(side=BOTTOM, fill=X, expand=False, padx=2, pady=(5, 2))
+        self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False)
+        self.__mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True)
+        self.__mainTextWidget.focus()
+        self.__entryLine.focus_set()
+
+    def unloadPanel(self):
+        self.__mainTextWidget.pack_forget()
+        self.__mScrollbar.pack_forget()
+        self.__microFrame.pack_forget()
+        self.__entryLine.pack_forget()
 
 class HasketWindow():
     def __init__(self):
+        self.__state = "TERMINAL"
         self.__fileTitle = "Untitled"
 
         #INITIALISING THE WINDOW
@@ -66,6 +97,7 @@ class HasketWindow():
         self.__root.geometry("800x500")
         self.__root.config(bg="#404040")
         self.__root.iconbitmap("HASKET.ico")
+        self.__root.minsize(800, 500)
 
         #drawing window geometry
         self.__mainFrame = Frame(self.__root, bg="#000080")
@@ -88,7 +120,9 @@ class HasketWindow():
         self.__terminal = EditorTerminalOut(self.__textWidgetFrame)
         self.__editor = EditorFile(self.__textWidgetFrame)
 
-        self.__root.bind("<Control-Tab>", lambda event: swapMode("EDITOR" if MODE == "TERMINAL" else "TERMINAL"))
+        self.__terminal.loadPanel()
+
+        self.__root.bind("<Control-Tab>", lambda event: self.SwapEditorPanel("EDITOR" if self.__state == "TERMINAL" else "TERMINAL"))
         self.__root.bind("<Control-o>", importScriptEntry)
         self.__root.bind("<Control-n>", lambda event: newScript())
 
@@ -106,6 +140,18 @@ class HasketWindow():
         self.__fileMenu.add_separator()
         self.__fileMenu.add_command(label="Exit", command=self.__root.destroy)
         self.__root.config(menu=self.__mainMenu)
+
+    def SwapEditorPanel(self, newState):
+        if self.__state == "TERMINAL":
+            self.__terminal.unloadPanel()
+        elif self.__state == "EDITOR":
+            self.__editor.unloadPanel()
+
+        self.__state = newState
+        if newState == "TERMINAL":
+            self.__terminal.loadPanel()
+        elif newState == "EDITOR":
+            self.__editor.loadPanel()
 
 
     def setFileTitle(self, fileTitle):
