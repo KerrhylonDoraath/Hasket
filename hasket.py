@@ -204,7 +204,7 @@ root.config(menu=mainMenu)
 
 CreateWindowTitle("Untitled")
 
-mProcess = subprocess.Popen(["bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+mProcess = subprocess.Popen(["C:\\HASKELL\\bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 RUNNING = True
 t1 = threading.Thread(target = updater)
 t1.start()
