@@ -7,8 +7,12 @@ Hasket is a python based program that is designed to create a light shell for st
 This branch is no longer maintained. It is the release of Haskell when it was stable to begin with.
 Since it was never designed to run on any other systems, there are many bugs and issues, most notably...
 
-<b>You have to change the path of your ghci executable on line 207, else Hasket will not find ghci.</b>
-<b>This program was designed for WINDOWS OS, so may be incompatible with MacOS and Linux-based systems.</b>
+- <b>This program relies on the Glasgow Haskell Compiler (GHCi) for Haskell, please ensure you have a functional version of GHCi before attempting to run this program! </b>
+- (Please see the license for GHC below:)
+	[https://www.haskell.org/ghc/license.html](https://www.haskell.org/ghc/license.html)
+
+- <b>You have to change the path of your ghci executable on line 207, else Hasket will not find ghci.</b>
+- <b>This program was designed for WINDOWS OS, so may be incompatible with MacOS and Linux-based systems.</b>
 
 ### Features in legacy 1.0:
 
