@@ -25,10 +25,16 @@ class EditorText():
         self.MODE = "UNDEFINED"
         self.__master = master
 
+    def setOutPipe(self, output):
+        pass
+
     def loadPanel(self):
         pass
 
     def unloadPanel(self):
+        pass
+
+    def printOut(self, text):
         pass
 
 class EditorFile(EditorText):
@@ -64,14 +70,14 @@ class EditorTerminalOut(EditorText):
         self.MODE = "TERMINAL"
 
         self.__microFrame = Frame(master, highlightthickness=0, highlightcolor = "#000080")
-        self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
-        self.__mainTextWidget.bind("<Return>", lambda event: retrieveInput(False))
+        self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, state="disabled", bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
 
         self.__entryLine = Text(master, height=1, bg="black", fg="white", highlightthickness=1, highlightcolor = "white", insertbackground="white")
+        self.__entryLine.bind("<Return>", lambda event: self.submitTerminalEntry(event))
 
         self.__mScrollbar = Scrollbar(self.__microFrame, orient=VERTICAL, width=20, command=self.__mainTextWidget.yview)
         self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
-
+        self.__mainTextWidget.bind("<FocusIn>", self.clickEntryCallback)
 
     def loadPanel(self):
         self.__microFrame.pack(expand=True, fill=BOTH, padx=2, pady=(0, 2))
@@ -87,10 +93,33 @@ class EditorTerminalOut(EditorText):
         self.__microFrame.pack_forget()
         self.__entryLine.pack_forget()
 
+
+    def submitTerminalEntry(self, event):
+        mEntry = self.__entryLine.get("1.0", END)
+        self.__entryLine.delete("0.0", END)
+        if mEntry[0] == '\n':
+            mEntry = mEntry[1:]
+        self.OUTPUT_PIPE(mEntry)
+        
+
+    def printOut(self, pText):
+        self.__mainTextWidget.config(state="normal")
+        self.__mainTextWidget.insert(END, pText)
+        self.__mainTextWidget.config(state="disabled")
+        self.__mainTextWidget.see(END)
+
+    def setOutPipe(self, output):
+        self.OUTPUT_PIPE = output.printOut
+
+    def clickEntryCallback(self, *ignore):
+        self.__entryLine.focus_set()
+
+
 class HasketWindow():
     def __init__(self):
         self.__state = "TERMINAL"
         self.__fileTitle = "Untitled"
+        self.OUPUT_PIPE = None
 
         #INITIALISING THE WINDOW
         self.__root = Tk()
@@ -140,6 +169,21 @@ class HasketWindow():
         self.__fileMenu.add_separator()
         self.__fileMenu.add_command(label="Exit", command=self.__root.destroy)
         self.__root.config(menu=self.__mainMenu)
+
+        self.SetOuptutPipe(self.__terminal)
+        self.__terminal.setOutPipe(self.__terminal)
+
+    def SetOuptutPipe(self, output):
+        self.OUTPUT_PIPE = output.printOut
+        self.__terminal.setOutPipe(self.__terminal)
+        self.__editor.setOutPipe(self.__editor)
+
+    def Loop(self):
+        self.__root.mainloop()
+
+    def pipeOut(self, outputText):
+        self.OUTPUT_PIPE(outputText)
+
 
     def SwapEditorPanel(self, newState):
         if self.__state == "TERMINAL":
@@ -260,14 +304,13 @@ def swapMode(event):
 
 
 def updater():
-    global mProcess, RUNNING, mainTextWidget
+    global mProcess, RUNNING, mWindow
     while RUNNING:
         line = mProcess.stdout.readline()
         if not line:
             break
         try:
-            mainTextWidget.insert(END, line)
-            mainTextWidget.see(END)
+            mWindow.pipeOut(line)
         except Exception as e:
             pass
             
@@ -291,19 +334,17 @@ def retrieveInput(addNewLine=False):
 mWindow = HasketWindow()
 mWindow.setFileTitle("Untitled")
     
-"""
-
 mProcess = subprocess.Popen(["C:\\HASKELL\\bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 RUNNING = True
 t1 = threading.Thread(target = updater)
 t1.start()
 
-if len(sys.argv) == 2:
+"""if len(sys.argv) == 2:
     importScript(sys.argv[1])
 else:
     newScript()
-
-root.mainloop()
+"""
+mWindow.Loop()
 
 RUNNING = False
 try:
@@ -311,4 +352,4 @@ try:
     mProcess.stdin.flush()
 except OSError:
     pass
-mProcess.kill()"""
+mProcess.kill()
