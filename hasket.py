@@ -45,7 +45,6 @@ class EditorText():
 class EditorFile(EditorText):
 
     #Designed to be a writeable area for haskell code development
-
     def __init__(self, master):
         self.MODE = "EDITOR"
 
@@ -127,14 +126,14 @@ class EditorTerminalOut(EditorText):
 #Main window
 class HasketWindow():
     def __init__(self):
+        
+        self.INACTIVE = "#D0D0D0"
+        self.ACTIVE = "#FFFFFF"
+        
         self.__fileTitle = "Untitled"
         self.OUPUT_PIPE = None
         self.panels = []
         self.panelDictionaries = []
-
-
-        self.INACTIVE = "#D0D0D0"
-        self.ACTIVE = "#FFFFFF"
 
         self.generateWindow()
         self.generateMenubar()
