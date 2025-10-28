@@ -24,21 +24,27 @@ def importScript(scriptName):
 
 ##TEMPLATE CLASS
 class EditorText():
+    ##Create object, and establish geometry
     def __init__(self, master):
         self.MODE = "UNDEFINED"
         self.__master = master
+        self.OUTPUT_PIPE = self.printOut
 
+    ##Set output to class provided
     def setOutPipe(self, output):
-        pass
+        self.OUTPUT_PIPE = output.printOut
 
+    ##Geometry to load
     def loadPanel(self):
         pass
 
+    ##Geometry to delete
     def unloadPanel(self):
         pass
 
+    ##Output method for window
     def printOut(self, text):
-        pass
+        print(text)
 
 
 ##TEXT EDITOR
@@ -46,13 +52,13 @@ class EditorFile(EditorText):
 
     #Designed to be a writeable area for haskell code development
     def __init__(self, master):
+        EditorText.__init__(self, master)
         self.MODE = "EDITOR"
 
         self.__modified = False
         self.__secondaryTextWidget = Text(master, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
         self.__secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
         self.__secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
-        #self.__secondaryTextWidget.bind("<Key>", ModifiedText)                                         #Binding saving keys
 
         self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__secondaryTextWidget.yview)
         self.__secondaryTextWidget.config(yscrollcommand=self.__mScrollbar.set)
@@ -68,14 +74,28 @@ class EditorFile(EditorText):
         self.__secondaryTextWidget.pack_forget()
         self.__mScrollbar.pack_forget()
 
+    def setOutPipe(self):
+        pass
+
+    def __del__(self):
+        pass
+    
+
 
 ##TERMINAL
 class EditorTerminalOut(EditorText):
     def __init__(self, master):
+        EditorText.__init__(self, master)
         self.MODE = "TERMINAL"
 
-        ##Create the terminal widgets
+        ##Boolean to determine if GHCi is running
+        self.RUNNING = False
+        ##Thread for GHCi to run
+        self.GHCiThread = None
+        self.GHCILoc = None
 
+        
+        ##Create the terminal widgets
         self.__microFrame = Frame(master, highlightthickness=0, highlightcolor = "#000080")
         self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, state="disabled", bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
         self.__entryLine = Text(master, height=1, bg="black", fg="white", highlightthickness=1, highlightcolor = "white", insertbackground="white")
@@ -93,6 +113,10 @@ class EditorTerminalOut(EditorText):
         self.__mainTextWidget.focus()
         self.__entryLine.focus_set()
 
+        ##Now displaying, we can be sure everything we need exists.
+        if not self.RUNNING:
+            self.startGHCI()
+
     #inherited method
     def unloadPanel(self):
         self.__mainTextWidget.pack_forget()
@@ -106,7 +130,14 @@ class EditorTerminalOut(EditorText):
         self.__entryLine.delete("0.0", END)         ##Clear the existing terminal code, pulling the entry
         if mEntry[0] == '\n':
             mEntry = mEntry[1:]
-        self.OUTPUT_PIPE(mEntry)                ##pipe it to wanted output
+
+        if mEntry[0] == "\\":
+            self.OUTPUT_PIPE("Command recognised as Hasket command.")
+        else:
+            ##Pipe entry to GHCi instead
+            self.mProcess.stdin.write(mEntry)
+            self.mProcess.stdin.flush()
+            self.OUTPUT_PIPE(mEntry)                ##pipe it to wanted output
         
 
     #inherited method
@@ -116,12 +147,72 @@ class EditorTerminalOut(EditorText):
         self.__mainTextWidget.config(state="disabled")
         self.__mainTextWidget.see(END)
 
-    def setOutPipe(self, output):
-        self.OUTPUT_PIPE = output.printOut
-
     #If the terminal out had focus... it doesn't anymore!
     def focusReset(self, *ignore):
         self.__entryLine.focus_set()
+
+
+    def startGHCI(self):
+        if self.GHCILoc == None:
+            mPath = self.FindGHCi()
+            if os.path.isfile(mPath):
+                valid = True
+        if valid:
+            self.mProcess = subprocess.Popen([mPath], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            self.RUNNING = True
+            self.GHCiThread = threading.Thread(target=self.updater)
+            self.GHCiThread.start()
+        else:
+            pass
+
+
+    def updater(self):
+        while self.RUNNING:
+            line = self.mProcess.stdout.readline()
+            if not line:
+                break
+            try:
+                self.OUTPUT_PIPE(line)
+            except Exception as e:
+                pass
+
+    def __del__(self):
+        self.RUNNING = False
+        self.mProcess.stdin.write(" :quit\r\n")
+        self.mProcess.stdin.flush()
+        self.GHCiThread.join()
+        self.mProcess.kill()
+
+    def FindGHCi(self):
+        def getReturn():
+            global returnString
+            returnString = mEntry.get()
+            temp.destroy()
+
+        
+        temp = Toplevel()
+        temp.title("Locate GHCi")
+        temp.resizable(False, False)
+        temp.iconbitmap("HASKET.ico")
+
+        Label(temp, text="Please enter location of GHCi executable").pack(side=TOP, padx=10, pady=(10, 5))
+
+        mEntry = Entry(temp, width=16)
+        mEntry.pack(side=TOP, padx=10, pady=(0, 10))
+
+        mBFrame = Frame(temp)
+        mBFrame.pack(side=BOTTOM)
+
+        mSubmitButton = Button(mBFrame, text="Submit", command=lambda: getReturn())
+        mSubmitButton.pack(side=LEFT, padx=10, pady=(0, 10))
+
+        mCancelButton = Button(mBFrame, text="Cancel", command=lambda: temp.destroy())
+        mCancelButton.pack(side=RIGHT, padx=10, pady=(0, 10))
+        temp.grab_set()
+        temp.wait_window()
+
+        return returnString
+        
 
 #Main window
 class HasketWindow():
@@ -226,6 +317,12 @@ class HasketWindow():
 
     def setFileTitle(self, fileTitle):
         self.__root.title(CreateWindowTitle(fileTitle))
+
+    def __del__(self):
+        for x in self.panelDictionaries:
+
+            x["Class"].__del__()
+            del x["Class"]
         
 
 
@@ -305,43 +402,6 @@ def saveScript(fileName):
 #SAVE AS SCRIPT
 def saveAsScript(*ignore):
     return tkinter.filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
-
-#MODE SWAP
-"""def swapMode(event):
-    return
-
-
-    global MODE, mainTextWidget, secondaryTextWidget
-    if event == "EDITOR":
-        MODE = "EDITOR"
-        ##Sets the editor set
-        EditorLabel.config(bg="white")
-        TerminalLabel.config(bg="#D0D0D0")
-        mainTextWidget.pack_forget()
-        secondaryTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-        secondaryTextWidget.focus()
-    else:
-        if MODIFIED:
-            tkinter.messagebox.showwarning("Warning", "Hasket cannot process the updated script until it is saved. It is recommended to go back and save your script.")
-        MODE = "TERMINAL"
-        ##Sets the terminal set
-        EditorLabel.config(bg="#D0D0D0")
-        TerminalLabel.config(bg="white")
-        secondaryTextWidget.pack_forget()
-        mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-        mainTextWidget.focus()
-"""
-
-def updater():
-    global mProcess, RUNNING, mWindow
-    while RUNNING:
-        line = mProcess.stdout.readline()
-        if not line:
-            break
-        try:
-            mWindow.pipeOut(line)
-        except Exception as e:
-            pass
             
 ##Reads the last line of the terminal
 def retrieveInput(addNewLine=False):
@@ -358,27 +418,9 @@ def retrieveInput(addNewLine=False):
         mainTextWidget.insert(END, "\nHASKELL has closed, cannot process command.\n")
     mainTextWidget.see(END)
 
-#SYNTAX HIGHLIGHTING
-
-mWindow = HasketWindow()
-mWindow.setFileTitle("Untitled")
+if __name__ == "__main__":
+    mWindow = HasketWindow()
+    mWindow.setFileTitle("Untitled")
     
-mProcess = subprocess.Popen(["C:\\HASKELL\\bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-RUNNING = True
-t1 = threading.Thread(target = updater)
-t1.start()
-
-"""if len(sys.argv) == 2:
-    importScript(sys.argv[1])
-else:
-    newScript()
-"""
-mWindow.Loop()
-
-RUNNING = False
-try:
-    mProcess.stdin.write(" :quit\r\n")
-    mProcess.stdin.flush()
-except OSError:
-    pass
-mProcess.kill()
+    mWindow.Loop()
+    del mWindow
