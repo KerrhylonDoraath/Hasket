@@ -183,6 +183,10 @@ class EditorTerminalOut(EditorText):
         self.GHCiThread.join()
         self.mProcess.kill()
 
+
+    ##TEMPORARY FIXUP. INCLUDE GHCI IN PROJECT
+
+    ##CONTINUE_POINT: Have this run ONCE on startup, then get the program to load a CONFIGURATION file
     def FindGHCi(self):
         def getReturn():
             global returnString
@@ -270,6 +274,8 @@ class HasketWindow():
         self.__root.iconbitmap("HASKET.ico")
         self.__root.minsize(800, 500)
 
+        self.__root.title(self.CreateWindowTitle())
+    
         #Establish the panel drawing space
         self.panelBar = Frame(self.__root, bg="#000080")
         self.panelBar.pack(pady=(20, 0), expand=False, fill=X, padx=30)
@@ -318,6 +324,15 @@ class HasketWindow():
     def setFileTitle(self, fileTitle):
         self.__root.title(CreateWindowTitle(fileTitle))
 
+    #Create Window Title
+    def CreateWindowTitle(self, scriptName=None):
+        originalTitle = "Hasket 1.0"
+        if scriptName != None:
+            returnTitle = f"{scriptName} - {originalTitle}"
+        else:
+            returnTitle = originalTitle
+        return returnTitle
+
     def __del__(self):
         for x in self.panelDictionaries:
 
@@ -335,8 +350,6 @@ def importScriptEntry(*ignore, HasketWindow):
         return
     importScript(mFile.name)
 
-
-
 def importScript(scriptName):
     global FILE_TITLE, secondaryTextWidget, mainTextWidget, INITIAL_TEXT
     with open(scriptName, "r") as mEntry:
@@ -351,20 +364,6 @@ def importScript(scriptName):
     mainTextWidget.edit_modified(False)
     CreateWindowTitle(scriptName)
     INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
-
-
-#Create Window Title
-def CreateWindowTitle(scriptName):
-    originalTitle = "Hasket 1.0"
-    returnTitle = f"{scriptName} - {originalTitle}"
-    return returnTitle
-
-#Modified event callback
-def ModifiedText(*ignore):
-    global MODIFIED, secondaryTextWidget
-    if secondaryTextWidget.get("1.0", END) != INITIAL_TEXT:
-        CreateWindowTitle(f"*{FILE_TITLE}")
-        MODIFIED = True
 
 #Saving Verification Link
 def SaveCheck():
@@ -403,20 +402,6 @@ def saveScript(fileName):
 def saveAsScript(*ignore):
     return tkinter.filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
             
-##Reads the last line of the terminal
-def retrieveInput(addNewLine=False):
-    global mProcess, mainTextWidget
-    text = mainTextWidget.get("end-1c linestart", f"end-1c") + "\r\n"
-    if ":quit" in text:
-        tkinter.messagebox.showwarning("Warning", "Executing this may cause the program to stop running haskell scripts. Command aborted.")
-        return
-    mainTextWidget.insert(END, "\n" if addNewLine else "")
-    try:
-        mProcess.stdin.write(text)
-        mProcess.stdin.flush()
-    except OSError:
-        mainTextWidget.insert(END, "\nHASKELL has closed, cannot process command.\n")
-    mainTextWidget.see(END)
 
 if __name__ == "__main__":
     mWindow = HasketWindow()
