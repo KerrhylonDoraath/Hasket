@@ -47,6 +47,16 @@ class EditorText():
         print(text)
 
 
+class DebugPanel(EditorText):
+    def __init__(self, master):
+        EditorText.__init__(self, master)
+        self.MODE = "DEBUG"
+
+        self.lab1 = Label(master, text="Will this work?")
+        self.lab2 = Label(master, text="Debugging option. If this appears, then we can add our own panels!")
+
+    def loadPanel(self):
+
 ##TEXT EDITOR
 class EditorFile(EditorText):
 
@@ -116,6 +126,8 @@ class EditorTerminalOut(EditorText):
         ##Now displaying, we can be sure everything we need exists.
         if not self.RUNNING:
             self.startGHCI()
+            if not self.RUNNING:
+                self.OUTPUT_PIPE("Could not start GHCi. Please run command \\restart to restart GHCi.\n")
 
     #inherited method
     def unloadPanel(self):
@@ -153,17 +165,19 @@ class EditorTerminalOut(EditorText):
 
 
     def startGHCI(self):
+        valid = False
         if self.GHCILoc == None:
             mPath = self.FindGHCi()
-            if os.path.isfile(mPath):
-                valid = True
+            if mPath != None:
+                if os.path.isfile(mPath):
+                    valid = True
         if valid:
             self.mProcess = subprocess.Popen([mPath], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             self.RUNNING = True
             self.GHCiThread = threading.Thread(target=self.updater)
             self.GHCiThread.start()
         else:
-            pass
+            tkinter.messagebox.showerror("Hasket", "GHCi could not be started.")
 
 
     def updater(self):
@@ -183,9 +197,6 @@ class EditorTerminalOut(EditorText):
         self.GHCiThread.join()
         self.mProcess.kill()
 
-
-    ##TEMPORARY FIXUP. INCLUDE GHCI IN PROJECT
-
     ##CONTINUE_POINT: Have this run ONCE on startup, then get the program to load a CONFIGURATION file
     def FindGHCi(self):
         def getReturn():
@@ -193,30 +204,51 @@ class EditorTerminalOut(EditorText):
             returnString = mEntry.get()
             temp.destroy()
 
-        
-        temp = Toplevel()
-        temp.title("Locate GHCi")
-        temp.resizable(False, False)
-        temp.iconbitmap("HASKET.ico")
+        if tkinter.messagebox.askyesno("GHCi not found", "GHCi was not found in the configuration file, or the configuration file is not present. Would you like to specify where GHCi is located?"):
+            
+            temp = Toplevel()
+            temp.title("Locate GHCi")
+            temp.resizable(False, False)
+            temp.iconbitmap("HASKET.ico")
+            temp.geometry("520x175")
+            temp.config(bg="#404040")
 
-        Label(temp, text="Please enter location of GHCi executable").pack(side=TOP, padx=10, pady=(10, 5))
+            Label(temp, text="Please enter location of GHCi executable").pack(side=TOP, padx=10, pady=(10, 5))
 
-        mEntry = Entry(temp, width=16)
-        mEntry.pack(side=TOP, padx=10, pady=(0, 10))
+            middleFrame = Frame(temp, background="#404040")
+            middleFrame.pack(side=TOP, padx=10)
 
-        mBFrame = Frame(temp)
-        mBFrame.pack(side=BOTTOM)
+            mEntry = Entry(middleFrame, width=64)
+            mEntry.pack(side=RIGHT, padx=10, pady=(10, 0))
 
-        mSubmitButton = Button(mBFrame, text="Submit", command=lambda: getReturn())
-        mSubmitButton.pack(side=LEFT, padx=10, pady=(0, 10))
+            imgFrame = Frame(middleFrame, background="white", highlightthickness=2, highlightbackground="black", highlightcolor="black")
+            imgFrame.pack(side=LEFT, padx=10, pady=10, expand=True)
+            
+            img = PhotoImage(file="Haskell.png")
+            mLabel = Label(imgFrame, image=img)
+            mLabel.pack(padx=2, pady=2)
 
-        mCancelButton = Button(mBFrame, text="Cancel", command=lambda: temp.destroy())
-        mCancelButton.pack(side=RIGHT, padx=10, pady=(0, 10))
-        temp.grab_set()
-        temp.wait_window()
+            mBFrame = Frame(temp, bg="#000080")
+            mBFrame.pack(side=BOTTOM, pady=(0, 10))
 
-        return returnString
-        
+            mSubmitButton = Button(mBFrame, text="Submit", command=lambda: getReturn())
+            mSubmitButton.pack(side=LEFT, padx=5, pady=5)
+
+            mCancelButton = Button(mBFrame, text="Cancel", command=lambda: temp.destroy())
+            mCancelButton.pack(side=RIGHT, padx=5, pady=5)
+            temp.grab_set()
+            temp.wait_window()
+
+            try:
+                return returnString
+            except NameError:
+                return None
+        else:
+            return None
+
+
+#File Class
+
 
 #Main window
 class HasketWindow():
@@ -288,6 +320,8 @@ class HasketWindow():
         self.drawSpace = Frame(self.__root, bg="#000080")
         self.drawSpace.pack(side=BOTTOM, padx=30, expand=True, fill=BOTH, pady=(0, 30))
 
+        self.__root.bind("<Control-Tab>", lambda e: self.nextPanel())
+
     def searchDictionary(self, nameID):
         for entry in self.panelDictionaries:
             if entry["ID"] == nameID:
@@ -321,8 +355,15 @@ class HasketWindow():
         self.unloadCurrentPanel()
         self.loadPanel(newPanel)
 
+    def nextPanel(self, *ignore):
+        mEntry = self.searchDictionary(self.mode)
+        mIndex = self.panelDictionaries.index(mEntry)
+        mIndex = (mIndex+1) % len(self.panelDictionaries)
+        self.swapMode(self.panelDictionaries[mIndex]["ID"])
+            
+
     def setFileTitle(self, fileTitle):
-        self.__root.title(CreateWindowTitle(fileTitle))
+        self.__root.title(self.CreateWindowTitle(fileTitle))
 
     #Create Window Title
     def CreateWindowTitle(self, scriptName=None):
