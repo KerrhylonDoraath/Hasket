@@ -46,17 +46,6 @@ class EditorText():
     def printOut(self, text):
         print(text)
 
-
-class DebugPanel(EditorText):
-    def __init__(self, master):
-        EditorText.__init__(self, master)
-        self.MODE = "DEBUG"
-
-        self.lab1 = Label(master, text="Will this work?")
-        self.lab2 = Label(master, text="Debugging option. If this appears, then we can add our own panels!")
-
-    def loadPanel(self):
-
 ##TEXT EDITOR
 class EditorFile(EditorText):
 
@@ -64,14 +53,25 @@ class EditorFile(EditorText):
     def __init__(self, master):
         EditorText.__init__(self, master)
         self.MODE = "EDITOR"
-
+        self.scriptName = "Untitled"
+        self.setTitle = None
+        self.MODIFIED = False
+    
         self.__modified = False
         self.__secondaryTextWidget = Text(master, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
-        self.__secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
-        self.__secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
-
+        self.__secondaryTextWidget.bind("<Control-s>", lambda event: self.saveScript())
+        self.__secondaryTextWidget.bind("<Control-Shift-S>", lambda event: ScriptIO.saveScript(ScriptIO.saveAsScript, self.__secondaryTextWidget))
+        self.__secondaryTextWidget.bind("<Control-o>", lambda event: self.openScript())
+        self.__secondaryTextWidget.bind("<Control-n>", lambda event: self.newScript())
+        self.__secondaryTextWidget.bind("<<Modified>>", lambda event: self.setModified())
+        
         self.__mScrollbar = Scrollbar(master, orient=VERTICAL, width=20, command=self.__secondaryTextWidget.yview)
         self.__secondaryTextWidget.config(yscrollcommand=self.__mScrollbar.set)
+
+        self.__secondaryTextWidget.config()
+
+    def setModified(self):
+        self.MODIFIED = True
 
     #inherited method
     def loadPanel(self):
@@ -84,11 +84,61 @@ class EditorFile(EditorText):
         self.__secondaryTextWidget.pack_forget()
         self.__mScrollbar.pack_forget()
 
+    def newScript(self, *ignore):
+        if self.MODIFIED:
+            saveTest = tkinter.messagebox.askyesnocancel("Warning", f"Save changes to {self.scriptName}?")
+            if saveTest == None:
+                return
+            if saveTest:
+                self.saveScript()
+        self.scriptName = "Untitled"
+        self.setWindowTitle()
+        self.__secondaryTextWidget.delete("1.0", END)
+        self.__secondaryTextWidget.edit_modified(False)
+        self.MODIFIED = False
+
+    def openScript(self, *ignore):
+        if self.MODIFIED:
+            saveTest = tkinter.messagebox.askyesnocancel("Warning", f"Save changes to {self.scriptName}?")
+            if saveTest == None:
+                return
+            if saveTest:
+                self.saveScript()
+        self.scriptName, text = ScriptIO.importScriptEntry()
+        self.__secondaryTextWidget.delete("1.0", END)
+        self.__secondaryTextWidget.insert("1.0", text)
+        self.__secondaryTextWidget.edit_modified(False)
+        self.MODIFIED = False
+        self.setWindowTitle()
+
+    def saveScript(self, *ignore):
+        self.scriptName = ScriptIO.saveScript(self.scriptName, self.__secondaryTextWidget)
+        self.setWindowTitle()
+        self.__secondaryTextWidget.edit_modified(False)
+        self.MODIFIED = False
+
+    def saveAsScript(self, *ignore):
+        self.scriptName = ScriptIO.saveScript(ScriptIO.saveAsScript(), self.__secondaryTextWidget)
+        self.setWindowTitle()
+        self.__secondaryTextWidget.edit_modified(False)
+        self.MODIFIED = False
+    
+    def setTitleCommand(self, command):
+        self.setTitle = command
+
+    def setWindowTitle(self):
+        self.setTitle(self.scriptName)
+    
     def setOutPipe(self):
         pass
 
     def __del__(self):
-        pass
+        if self.MODIFIED:
+            saveTest = tkinter.messagebox.askyesnocancel("Warning", f"Save changes to {self.scriptName}?")
+            if saveTest == None:
+                return
+            if saveTest:
+                self.saveScript()
     
 
 
@@ -103,6 +153,7 @@ class EditorTerminalOut(EditorText):
         ##Thread for GHCi to run
         self.GHCiThread = None
         self.GHCILoc = None
+        self.mProcess = None
 
         
         ##Create the terminal widgets
@@ -142,10 +193,11 @@ class EditorTerminalOut(EditorText):
         self.__entryLine.delete("0.0", END)         ##Clear the existing terminal code, pulling the entry
         if mEntry[0] == '\n':
             mEntry = mEntry[1:]
-
         if mEntry[0] == "\\":
-            self.OUTPUT_PIPE("Command recognised as Hasket command.")
+            self.callCommandLibrary(mEntry[1:-1])
         else:
+            if len(mEntry) == 0:
+                return
             ##Pipe entry to GHCi instead
             self.mProcess.stdin.write(mEntry)
             self.mProcess.stdin.flush()
@@ -159,10 +211,47 @@ class EditorTerminalOut(EditorText):
         self.__mainTextWidget.config(state="disabled")
         self.__mainTextWidget.see(END)
 
+    def clearOutput(self):
+        self.__mainTextWidget.config(state="normal")
+        self.__mainTextWidget.delete("1.0", END)
+        self.__mainTextWidget.config(state="disabled")
+    
     #If the terminal out had focus... it doesn't anymore!
     def focusReset(self, *ignore):
         self.__entryLine.focus_set()
 
+    def callCommandLibrary(self, mInput):
+        mInput = mInput.split(" ")
+        
+        if mInput[0] == "loadEditor":
+            if self.boundEditor.scriptName == "Untitled" or self.boundEditor.scriptName == None:
+                self.OUTPUT_PIPE("> Please save the contents of the editor.\n")
+                return
+            if not self.RUNNING:
+               self.OUTPUT_PIPE("> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+               return
+            mEntry = r'"' + self.boundEditor.scriptName + r'"'
+            mEntry = mEntry.encode("unicode_escape").decode()
+            self.mProcess.stdin.write(f":load {mEntry}\n")
+            self.mProcess.stdin.flush()
+
+        elif mInput[0] == "restart":
+            self.startGHCI()
+
+        elif mInput[0] == "clear":
+            self.clearOutput()
+
+        elif mInput[0] == "load":
+            if len(mInput) == 2:
+                if not self.RUNNING:
+                   self.OUTPUT_PIPE("> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+                   return
+                rawIn = mInput[1].encode("unicode_escape").decode()
+                self.mProcess.stdin.write(f":load {rawIn}\n")
+                self.mProcess.stdin.flush()
+                
+    def bindEditor(self, editorObject):
+        self.boundEditor = editorObject    
 
     def startGHCI(self):
         valid = False
@@ -192,20 +281,25 @@ class EditorTerminalOut(EditorText):
 
     def __del__(self):
         self.RUNNING = False
-        self.mProcess.stdin.write(" :quit\r\n")
-        self.mProcess.stdin.flush()
-        self.GHCiThread.join()
-        self.mProcess.kill()
+        try:
+            self.mProcess.stdin.write(" :quit\r\n")
+            self.mProcess.stdin.flush()
+            self.GHCiThread.join()
+            self.mProcess.kill()
+        except:
+            pass
 
     ##CONTINUE_POINT: Have this run ONCE on startup, then get the program to load a CONFIGURATION file
     def FindGHCi(self):
         def getReturn():
             global returnString
             returnString = mEntry.get()
+            if returnString[-1] == "\n":
+                returnString = returnString[:-1]
             temp.destroy()
 
-        if tkinter.messagebox.askyesno("GHCi not found", "GHCi was not found in the configuration file, or the configuration file is not present. Would you like to specify where GHCi is located?"):
-            
+        #if tkinter.messagebox.askyesno("GHCi not found", "GHCi was not found in the configuration file, or the configuration file is not present. Would you like to specify where GHCi is located?"):
+        if tkinter.messagebox.askyesno("GHCi not found", "Would you like to specify the location of ghci.exe?"):   
             temp = Toplevel()
             temp.title("Locate GHCi")
             temp.resizable(False, False)
@@ -220,6 +314,7 @@ class EditorTerminalOut(EditorText):
 
             mEntry = Entry(middleFrame, width=64)
             mEntry.pack(side=RIGHT, padx=10, pady=(10, 0))
+            mEntry.bind("<Return>", lambda event: getReturn())
 
             imgFrame = Frame(middleFrame, background="white", highlightthickness=2, highlightbackground="black", highlightcolor="black")
             imgFrame.pack(side=LEFT, padx=10, pady=10, expand=True)
@@ -236,6 +331,7 @@ class EditorTerminalOut(EditorText):
 
             mCancelButton = Button(mBFrame, text="Cancel", command=lambda: temp.destroy())
             mCancelButton.pack(side=RIGHT, padx=5, pady=5)
+            mEntry.focus_set()
             temp.grab_set()
             temp.wait_window()
 
@@ -256,6 +352,8 @@ class HasketWindow():
         
         self.INACTIVE = "#D0D0D0"
         self.ACTIVE = "#FFFFFF"
+        self.mode = "UNDEFINED"
+    
         
         self.__fileTitle = "Untitled"
         self.OUPUT_PIPE = None
@@ -263,11 +361,18 @@ class HasketWindow():
         self.panelDictionaries = []
 
         self.generateWindow()
-        self.generateMenubar()
+        #self.generateMenubar()
         
         self.createPanel("TERMINAL", EditorTerminalOut)
         self.createPanel("EDITOR", EditorFile)
 
+        mTerminal = self.searchDictionary("TERMINAL")
+        mEntry = self.searchDictionary("EDITOR")
+        
+        mTerminal["Class"].bindEditor(mEntry["Class"])
+        mEntry["Class"].setTitleCommand(self.setFileTitle)
+
+    def start(self):
         self.loadPanel("TERMINAL")
         self.SetOuptutPipe("TERMINAL")
         
@@ -321,6 +426,7 @@ class HasketWindow():
         self.drawSpace.pack(side=BOTTOM, padx=30, expand=True, fill=BOTH, pady=(0, 30))
 
         self.__root.bind("<Control-Tab>", lambda e: self.nextPanel())
+        self.__root.bind("<Destroy>", lambda event: self.onDelete(event))
 
     def searchDictionary(self, nameID):
         for entry in self.panelDictionaries:
@@ -356,10 +462,13 @@ class HasketWindow():
         self.loadPanel(newPanel)
 
     def nextPanel(self, *ignore):
-        mEntry = self.searchDictionary(self.mode)
-        mIndex = self.panelDictionaries.index(mEntry)
-        mIndex = (mIndex+1) % len(self.panelDictionaries)
-        self.swapMode(self.panelDictionaries[mIndex]["ID"])
+        if self.mode == "UNDEFINED":
+            self.swapMode(self.panelDictionaries[0]["ID"])
+        else:
+            mEntry = self.searchDictionary(self.mode)
+            mIndex = self.panelDictionaries.index(mEntry)
+            mIndex = (mIndex+1) % len(self.panelDictionaries)
+            self.swapMode(self.panelDictionaries[mIndex]["ID"])
             
 
     def setFileTitle(self, fileTitle):
@@ -374,79 +483,74 @@ class HasketWindow():
             returnTitle = originalTitle
         return returnTitle
 
-    def __del__(self):
-        for x in self.panelDictionaries:
+    def onDelete(self, event):
+        if event.widget == event.widget.winfo_toplevel():
+            self.deleteAll()    
 
+    def deleteAll(self):
+        for x in self.panelDictionaries:
             x["Class"].__del__()
             del x["Class"]
         
+class ScriptIO():    
+    #IMPORTING HASKELL SCRIPT
+    @staticmethod
+    def importScriptEntry(*ignore):
+        mFile = tkinter.filedialog.askopenfilename(filetypes=[("Haskell Scripts", ".hs")])
+        if not mFile:
+            return (None, "")
+        return ScriptIO.importScript(mFile)
+    @staticmethod
+    def importScript(scriptName):
+        try:
+            with open(scriptName, "r") as mEntry:
+                x = mEntry.readline()
+                scriptText = []
+                while x != "":
+                    scriptText.append(x)
+                    x = mEntry.readline()
+                resString = ""
+                for item in scriptText:
+                    resString += item
+                return (scriptName, resString)
+        except OSError:
+            tkinter.messagebox.showerror("Error", f"Unable to open file: {scriptName}")
+            return (None, "")
+        
+    #Saving Verification Link
+    @staticmethod
+    def SaveCheck(MODIFIED=True):
+        if MODIFIED:
+            return tkinter.messagebox.askyesno("Save Changes", f"Save changes to {FILE_TITLE}?")
+        
+    #SAVING SCRIPT
+    @staticmethod
+    def saveScript(fileName, textWidget):
+        if fileName == None or fileName == "Untitled":
+            fileName = ScriptIO.saveAsScript()
+            if fileName == None:
+                return None
+            if fileName[-3:] != ".hs":
+                fileName += ".hs"
+        if fileName != None and fileName != "Untitled":
+            with open(fileName, "w") as mFile:
+                mFile.write(textWidget.get("1.0", END))
+            tkinter.messagebox.showinfo("Success", f"Successfully saved to file: {fileName}!")
+            return fileName
+        return None
 
-
-#IMPORTING HASKELL SCRIPT
-def importScriptEntry(*ignore, HasketWindow):
-    if SaveCheck():
-        saveScript()
-    mFile = tkinter.filedialog.askopenfile(filetypes=[("Haskell Scripts", ".hs")])
-    if not mFile:
-        return
-    importScript(mFile.name)
-
-def importScript(scriptName):
-    global FILE_TITLE, secondaryTextWidget, mainTextWidget, INITIAL_TEXT
-    with open(scriptName, "r") as mEntry:
-        FILE_TITLE = scriptName
-        secondaryTextWidget.delete("1.0", END)
-        x = mEntry.readline()
-        while x != "":
-            secondaryTextWidget.insert(END, x)
-            x = mEntry.readline()
-    mainTextWidget.insert(END, f':load "{scriptName}"')
-    retrieveInput(True)
-    mainTextWidget.edit_modified(False)
-    CreateWindowTitle(scriptName)
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
-
-#Saving Verification Link
-def SaveCheck():
-    if MODIFIED:
-        return tkinter.messagebox.askyesno("Save Changes", f"Save changes to {FILE_TITLE}?")
-
-#CREATING NEW SCRIPT
-def newScript():
-    global FILE_TITLE, MODIFIED, secondaryTextWidget, INITIAL_TEXT
-    if SaveCheck():
-        saveScript()
-    FILE_TITLE = "Untitled"
-    CreateWindowTitle("Untitled")
-    secondaryTextWidget.delete("1.0", END)
-    MODIFIED = False
-    secondaryTextWidget.edit_modified(False)
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
-
-#SAVING SCRIPT
-def saveScript(fileName):
-    global MODIFIED, INITIAL_TEXT, FILE_TITLE
-    if fileName == None or fileName == "Untitled":
-        fileName = saveAsScript()
-        if fileName == None:
-            return
-        if fileName[-3:] != ".hs":
-            fileName += ".hs"
-    with open(fileName, "w") as mFile:
-        mFile.write(secondaryTextWidget.get("1.0", END))
-    CreateWindowTitle(fileName)
-    MODIFIED = False
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
-    FILE_TITLE = fileName
-
-#SAVE AS SCRIPT
-def saveAsScript(*ignore):
-    return tkinter.filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
+    #SAVE AS SCRIPT
+    @staticmethod
+    def saveAsScript(*ignore):
+        return tkinter.filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
             
 
 if __name__ == "__main__":
     mWindow = HasketWindow()
     mWindow.setFileTitle("Untitled")
-    
+
+
+    mWindow.start()
+
     mWindow.Loop()
     del mWindow
