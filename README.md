@@ -1,14 +1,22 @@
 # Hasket Development
 
-Hasket is a python based program that is designed to create a light shell for streamlined writing of Haskell code.
+Hasket is a python based program that is designed to create a lightweight shell in python for streamlined writing of Haskell code.
 
+The code contains options for extending Hasket functionality to include custom panels and designs for customisation and extensions of practicality.
 
-## Entry dated 07/10/25 00:50
+## Features
 
-Refactoring in progress, converting the entire program to object-oriented paradigm. Editor moved across, but I must engage pack forgetting. Follow up to correct the file menus to fix up hasket.
+### The terminal Window
 
-Now, I will add an entry bar to the bottom of the terminal widget to input into there without disturbing the OUTPUT.
+TODO: Insert pic of terminal window.
 
-## Entry dated 28/10/25 00:46
+The terminal is the main way to interact with GHCI. You can enter any haskell command in the entry bar at the bottom of the window, press enter, and the command will run.
 
-Refactoring still in progress, as mostly I could not be asked to fix this. The refactor is still in progress but now I must streamline location of ghci in my program. One option is I send out ghci with my code but that is a bad idea. The other option is.... I get the user to locate ghci themselves. Presumably they'd already have it if they want to develop in Haskell!
+TODO: Insert pic of terminal window with command usage.
+
+The terminal also has additional commands implemented in Hasket:
+
+`\loadEditor` - If a program has been saved in the editor, then this command will load the script as if imported.
+`\restart` - Will attempt to restart GHCI if things have gone awry.
+`\clear` - Will clear the terminal output window.
+`\load <scriptPath>` - Will attempt to load the script provided
