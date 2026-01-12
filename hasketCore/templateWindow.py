@@ -1,5 +1,5 @@
 ##TEMPLATE CLASS
-class EditorText():
+class EditorText:
     ##Create object, and establish geometry
     def __init__(self, master):
         self.MODE = "UNDEFINED"
