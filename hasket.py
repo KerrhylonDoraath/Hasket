@@ -461,14 +461,14 @@ class HasketWindow():
         self.__mainMenu.add_cascade(menu=self.__fileMenu, label="File")
 
         #File Menu
-        self.__fileMenu.add_command(label="New Script", command=newScript)
+        """self.__fileMenu.add_command(label="New Script", command=newScript)
         self.__fileMenu.add_command(label="Open Script", command=importScriptEntry)
         self.__fileMenu.add_separator()
         self.__fileMenu.add_command(label="Save", command=lambda: saveScript(FILE_TITLE))
         self.__fileMenu.add_command(label="Save As", command=lambda: saveScript(saveAsScript))
         self.__fileMenu.add_separator()
         self.__fileMenu.add_command(label="Exit", command=self.__root.destroy)
-        self.__root.config(menu=self.__mainMenu)
+        self.__root.config(menu=self.__mainMenu)"""
 
 
     def generateEditorPanel(self, panelName):
@@ -566,7 +566,8 @@ class HasketWindow():
             x["Class"].__del__()
             del x["Class"]
             
-class ScriptIO():    
+class ScriptIO():
+    FILE_TITLE = ""
     #IMPORTING HASKELL SCRIPT
     @staticmethod
     def importScriptEntry(*ignore):
@@ -621,7 +622,6 @@ class ScriptIO():
 if __name__ == "__main__":
     mWindow = HasketWindow()
     mWindow.setFileTitle("Untitled")
-
 
     mWindow.start()
 
