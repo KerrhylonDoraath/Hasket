@@ -18,7 +18,6 @@ The terminal also has additional commands implemented in Hasket:
 
 ***
 - `\loadEditor` - If a program has been saved in the editor, then this command will load the script as if imported.
-
 - `\restart` - Will attempt to restart GHCI if things have gone awry.
 - `\clear` - Will clear the terminal output window.
 - `\load <scriptPath>` - Will attempt to load the script provided

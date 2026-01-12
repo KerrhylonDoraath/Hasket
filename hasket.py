@@ -9,6 +9,8 @@ import tkinter.messagebox
 import tkinter.filedialog
 import threading
 
+from hasketCore.templateWindow import EditorText
+
 #Title of the open file
 MODIFIED = False
 WINDOW_TITLE = ""
@@ -21,30 +23,6 @@ INITIAL_TEXT = ""
 def importScript(scriptName):
     with open(scriptName, "r") as importText:
         pass
-
-##TEMPLATE CLASS
-class EditorText():
-    ##Create object, and establish geometry
-    def __init__(self, master):
-        self.MODE = "UNDEFINED"
-        self.__master = master
-        self.OUTPUT_PIPE = self.printOut
-
-    ##Set output to class provided
-    def setOutPipe(self, output):
-        self.OUTPUT_PIPE = output.printOut
-
-    ##Geometry to load
-    def loadPanel(self):
-        pass
-
-    ##Geometry to delete
-    def unloadPanel(self):
-        pass
-
-    ##Output method for window
-    def printOut(self, text):
-        print(text)
 
 ##TEXT EDITOR
 class EditorFile(EditorText):
