@@ -1,14 +1,17 @@
-##TEMPLATE CLASS
+
+
 class EditorText:
+    ##TEMPLATE CLASS
+
     ##Create object, and establish geometry
-    def __init__(self, master):
-        self.MODE = "UNDEFINED"
+    def __init__(self, master: EditorText):
         self.__master = master
-        self.OUTPUT_PIPE = self.printOut
+        self._mode = "UNDEFINED"
+        self._outputPipe = self.printOut
 
     ##Set output to class provided
-    def setOutPipe(self, output):
-        self.OUTPUT_PIPE = output.printOut
+    def setOutPipe(self, output: EditorText) -> None:
+        self._outputPipe = output.printOut
 
     ##Geometry to load
     def loadPanel(self):
