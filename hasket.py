@@ -9,7 +9,7 @@ import tkinter.messagebox
 import tkinter.filedialog
 import threading
 
-from hasketCore.templateWindow import EditorText
+from hasketCore.templateWindow import GenericPanel
 
 #Title of the open file
 MODIFIED = False
@@ -25,11 +25,11 @@ def importScript(scriptName):
         pass
 
 ##TEXT EDITOR
-class EditorFile(EditorText):
+class EditorFile(GenericPanel):
 
     #Designed to be a writeable area for haskell code development
     def __init__(self, master):
-        EditorText.__init__(self, master)
+        GenericPanel.__init__(self, master)
         self.MODE = "EDITOR"
 
         #Script Name is what to call the file open
@@ -130,9 +130,9 @@ class EditorFile(EditorText):
 
 
 ##TERMINAL
-class EditorTerminalOut(EditorText):
+class EditorTerminalOut(GenericPanel):
     def __init__(self, master):
-        EditorText.__init__(self, master)
+        GenericPanel.__init__(self, master)
         self.MODE = "TERMINAL"
 
         ##Boolean to determine if GHCi is running
