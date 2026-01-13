@@ -33,6 +33,15 @@ for python with one notable exception:
 - Class methods and members shall conform to `mixedCase` convention. This is because
 I like this standard and arguably this is my project.
 
+Variable names inside of functions do not have to follow any specific naming conventions.
+
+***
+
+Class members that are public are to be named starting with a lowercase `m`. This distinguishes
+them as member variables. 
+
+Examples include: `mVector` `mParam1` `mAccelleration`
+
 <i>Key note: Inheritance is a key part of including additional window tabs in Hasket.
 If a new tab is created, please implement all base methods. To practice public and non-public standards,
 any mangled names are to be kept mangled. Please do not go into the parent class, I will reject your merge request!</i>
