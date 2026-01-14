@@ -281,8 +281,8 @@ class HasketWindow():
         mTerminal = self.searchDictionary("TERMINAL")
         mEntry = self.searchDictionary("EDITOR")
         
-        mTerminal["Class"].bindEditor(mEntry["Class"])
-        mEntry["Class"].setTitleCommand(self.setFileTitle)
+        #mTerminal["Class"].bindEditor(mEntry["Class"])
+        #mEntry["Class"].setTitleCommand(self.setFileTitle)
 
         self.loadConfigFile()
 
