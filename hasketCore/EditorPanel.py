@@ -49,7 +49,7 @@ class EditorPanel(GenericPanel):
                                 )
                                 )
         self.__editorPanel.bind("<Control-o>",
-                                self.openScript
+                                lambda event: self.openScript()
                                 )
         self.__editorPanel.bind("<Control-n>",
                                 lambda event: self.newScript())
@@ -124,6 +124,7 @@ class EditorPanel(GenericPanel):
 
     @__funcSave
     def openScript(self, *_) -> None:
+        return
         self.scriptName, text = ScriptIO.importScriptEntry()  # Get import name and text
         self.__editorPanel.delete("1.0", END)
         self.__editorPanel.insert("1.0", text)
