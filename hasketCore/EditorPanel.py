@@ -1,15 +1,16 @@
 from tkinter import *
+from tkinter import messagebox
 
-
-from GenericPanel import GenericPanel
+from hasketCore.GenericPanel import GenericPanel
+from hasketCore.ScriptIO import ScriptIO
 
 ##TEXT EDITOR
-class EditorFile(GenericPanel):
+class EditorPanel(GenericPanel):
 
     # Designed to be a writeable area for haskell code development
     def __init__(self, master):
         GenericPanel.__init__(self, master)
-        self.MODE = "EDITOR"
+        self._mode = "EDITOR"
 
         # Script Name is what to call the file open
         self.scriptName = "Untitled"
@@ -65,7 +66,7 @@ class EditorFile(GenericPanel):
     # Prompts saving
     def checkSave(self):
         if self.MODIFIED:
-            saveTest = tkinter.messagebox.askyesnocancel("Warning",
+            saveTest = messagebox.askyesnocancel("Warning",
                                                          f"Save changes to {self.scriptName}?")
             if saveTest == None:
                 return False  ##User hit cancel

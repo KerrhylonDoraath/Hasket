@@ -10,6 +10,7 @@ import tkinter.filedialog
 import threading
 
 from hasketCore.GenericPanel import GenericPanel
+from hasketCore.EditorPanel import EditorPanel
 
 #Title of the open file
 MODIFIED = False
@@ -275,7 +276,7 @@ class HasketWindow():
         #self.generateMenubar()
         
         self.createPanel("TERMINAL", EditorTerminalOut)
-        self.createPanel("EDITOR", EditorFile)
+        self.createPanel("EDITOR", EditorPanel)
 
         mTerminal = self.searchDictionary("TERMINAL")
         mEntry = self.searchDictionary("EDITOR")
