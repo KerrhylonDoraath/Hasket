@@ -12,7 +12,7 @@ class GenericPanel:
     def __init__(self, master: Widget):
         """master parameter is for attaching to a valid tkinter context."""
 
-        self.__master = master
+        self._master = master
         self._mode = "UNDEFINED"
         self._outputPipe = self.printOut
 
