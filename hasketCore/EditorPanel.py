@@ -21,6 +21,14 @@ class EditorPanel(GenericPanel):
         # Tracks the state of open files in the Hasket window
         self.MODIFIED = False
 
+        self.__fileTitleFrame = Frame(master, bg="#000080")
+
+        self.__fileTitleLabel = Label(self.__fileTitleFrame, bg="white",
+                                    highlightthickness=1,
+                                    fg="black",
+                                    text=self.scriptName,
+                                    justify="left")
+
         # Text widget
         self.__secondaryTextWidget = Text(master, bg="white", fg="black",
                                           highlightthickness=1,
@@ -52,6 +60,9 @@ class EditorPanel(GenericPanel):
 
     # inherited method
     def loadPanel(self):
+        self.__fileTitleFrame.pack(side="top", anchor="w", expand=False, fill="x", padx=2, pady=2)
+        self.__fileTitleLabel.pack(side="left", anchor="w", padx=1)
+
         self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2,
                                pady=(0, 2))
         self.__secondaryTextWidget.pack(side=LEFT, fill=BOTH, expand=True,
@@ -60,6 +71,7 @@ class EditorPanel(GenericPanel):
 
     # inherited method
     def unloadPanel(self):
+        self.fileTitleLabel.pack_forget()
         self.__secondaryTextWidget.pack_forget()
         self.__mScrollbar.pack_forget()
 
