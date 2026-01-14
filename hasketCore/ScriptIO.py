@@ -3,16 +3,22 @@ Provides methods to save a script, or import a script.
 
 Purely an IO library, so does not deal with any
 panels.
+
 """
 
 from tkinter import filedialog, messagebox
 
 class ScriptIO:
-    mFileTitle = ""
 
     @staticmethod
     def importScriptEntry(*_) -> tuple[str, str, str]:
-        """Selects a script to load. Presumed a check has happened."""
+        """Selects a script to load. Presumed a check has happened.
+
+        Returns:
+            File path       (str)
+            File name       (str)
+            File contents   (str)
+        """
 
         foundFile = filedialog.askopenfilename(
             filetypes=[("Haskell Scripts", ".hs")])
@@ -39,19 +45,6 @@ class ScriptIO:
                 f"Unable to open file: {scriptName}"
             )
             return "", "", ""
-
-    # Saving Verification Link
-    @classmethod
-    def saveCheck(cls, modified: bool =True) -> bool:
-        """Checks if the script is saved or not."""
-
-        if modified:
-            return messagebox.askyesno(
-                "Save Changes",
-                f"Save changes to {cls.mFileTitle}?",
-                icon="warning"
-            )
-        return False
 
     @staticmethod
     def _validateFileName(fileName : str | None) -> str:
