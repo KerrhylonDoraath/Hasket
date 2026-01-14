@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter import messagebox
 
+from typing import override
+
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.ScriptIO import ScriptIO
 
@@ -54,22 +56,21 @@ class EditorPanel(GenericPanel):
                                       command=self.__secondaryTextWidget.yview)
         self.__secondaryTextWidget.config(yscrollcommand=self.__mScrollbar.set)
 
-    # Modification callback
-    def setModified(self):
-        self.MODIFIED = True
+    def setModified(self, modified: bool =False) -> None:
+        self.MODIFIED = modified
 
-    # inherited method
+    @override
     def loadPanel(self):
         self.__fileTitleFrame.pack(side="top", anchor="w", expand=False, fill="x", padx=2, pady=2)
         self.__fileTitleLabel.pack(side="left", anchor="w", padx=1)
 
-        self.__mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2,
+        self.__mScrollbar.pack(side="right", fill="y", expand=False, padx=2,
                                pady=(0, 2))
-        self.__secondaryTextWidget.pack(side=LEFT, fill=BOTH, expand=True,
+        self.__secondaryTextWidget.pack(side="left", fill="both", expand=True,
                                         padx=(2, 0), pady=(0, 2))
         self.__secondaryTextWidget.focus()
 
-    # inherited method
+    @override
     def unloadPanel(self):
         self.fileTitleLabel.pack_forget()
         self.__secondaryTextWidget.pack_forget()
@@ -128,9 +129,6 @@ class EditorPanel(GenericPanel):
 
     def setWindowTitle(self):
         self.setTitle(self.scriptName)  # Wrapper to call setTitle more easily
-
-    def setOutPipe(self):
-        pass  # No need for an output pipe
 
     def __del__(self):
         self.checkSave()
