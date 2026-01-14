@@ -11,32 +11,38 @@ class ScriptIO:
     mFileTitle = ""
 
     @staticmethod
-    def importScriptEntry(*_) -> tuple[str, str]:
+    def importScriptEntry(*_) -> tuple[str, str, str]:
         """Selects a script to load. Presumed a check has happened."""
 
         foundFile = filedialog.askopenfilename(
             filetypes=[("Haskell Scripts", ".hs")])
         if not foundFile:
-            return "", ""
+            return "", "", ""
         return ScriptIO._importScript(foundFile)
 
     @staticmethod
-    def _importScript(scriptName: str) -> tuple[str, str]:
+    def __extractPath(itemName: str) -> str:
+        if itemName[-1] not in ("\\", "/"):
+          return ScriptIO.__extractPath(itemName[:-1])
+        return itemName
+
+    @staticmethod
+    def _importScript(scriptName: str) -> tuple[str, str, str]:
         """Imports a script and returns its name and contents."""
 
         try:
             with open(scriptName, "r") as mEntry:
-                return scriptName, mEntry.read()
+                return ScriptIO.__extractPath(scriptName), scriptName, mEntry.read()
         except OSError:
             messagebox.showerror(
                 "Error",
                 f"Unable to open file: {scriptName}"
             )
-            return "", ""
+            return "", "", ""
 
     # Saving Verification Link
     @classmethod
-    def SaveCheck(cls, modified: bool =True) -> bool:
+    def saveCheck(cls, modified: bool =True) -> bool:
         """Checks if the script is saved or not."""
 
         if modified:
@@ -62,7 +68,11 @@ class ScriptIO:
     # SAVING SCRIPT
     @staticmethod
     def saveScript(fileName : str | None, textToSave : str) -> str | None:
-        """Saves a script to a file."""
+        """Saves a script to a file.
+        :param fileName: The name of the file to save. None if the filename
+        is to be selected.
+        :param textToSave: The content string to write out.
+        """
 
         fileName = ScriptIO._validateFileName(fileName)
         if fileName ==  "":
