@@ -15,9 +15,9 @@ class ScriptIO:
         """Selects a script to load. Presumed a check has happened.
 
         Returns:
-            File path       (str)
-            File name       (str)
-            File contents   (str)
+            (str) File path
+            (str) File name
+            (str) File contents
         """
 
         foundFile = filedialog.askopenfilename(
@@ -60,30 +60,36 @@ class ScriptIO:
 
     # SAVING SCRIPT
     @staticmethod
-    def saveScript(fileName : str | None, textToSave : str) -> str | None:
+    def saveScript(fileName : str | None, text : str) -> int:
         """Saves a script to a file.
-        :param fileName: The name of the file to save. None if the filename
-        is to be selected.
-        :param textToSave: The content string to write out.
+
+        Parameters:
+            (str) fileName: Name of the file to save.
+            (str) text:     Text to write to the file.
+
+        Returns:
+            (int)  0: Success.
+            (int)  1: Filename was invalid, or operation was cancelled.
+            (int) -1: OSError occurred
         """
 
         fileName = ScriptIO._validateFileName(fileName)
         if fileName ==  "":
-            return None
+            return 1
         try:
             with open(fileName, "w") as mFile:
-                mFile.write(textToSave)
+                mFile.write(text)
                 messagebox.showinfo(
                     "Success",
                     f"Successfully saved to file: {fileName}!"
                 )
-                return fileName
+                return 0
         except OSError:
             messagebox.showerror(
                 "Error",
                 f"Unable to open file: {fileName}"
             )
-        return None
+        return -1
 
     # SAVE AS SCRIPT
     @staticmethod
