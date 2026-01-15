@@ -46,7 +46,6 @@ class ScriptIO:
 
         try:
             with open(scriptName, "r") as mEntry:
-                print()
                 return (ScriptIO.__extractPath(scriptName),
                         ScriptIO.__extractName(scriptName),
                         mEntry.read())
