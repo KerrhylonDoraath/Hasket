@@ -22,8 +22,7 @@ class ScriptIO:
             (str) File contents
         """
 
-        foundFile = filedialog.askopenfilename(
-            filetypes=[("Haskell Scripts", ".hs")])
+        foundFile = filedialog.askopenfilename(filetypes=[("Haskell Scripts", ".hs")])
         if not foundFile:
             return "", "", ""
         return ScriptIO._importScript(foundFile)
@@ -50,10 +49,7 @@ class ScriptIO:
                         ScriptIO.__extractName(scriptName),
                         mEntry.read())
         except OSError:
-            messagebox.showerror(
-                "Error",
-                f"Unable to open file: {scriptName}"
-            )
+            messagebox.showerror("Error", f"Unable to open file: {scriptName}")
             return "", "", ""
 
     @staticmethod
@@ -95,21 +91,13 @@ class ScriptIO:
             with open(fileName, "w") as mFile:
                 mFile.write(text)
         except OSError:
-            messagebox.showerror(
-                "Error",
-                f"Unable to open file: {fileName}"
-            )
+            messagebox.showerror("Error", f"Unable to open file: {fileName}")
             return -1, None
-        messagebox.showinfo(
-            "Success",
-            f"Successfully saved to file: {fileName}!"
-        )
+        messagebox.showinfo("Success", f"Successfully saved to file: {fileName}!")
         return 0, ScriptIO._importScript(fileName)
 
     @staticmethod
     def _saveAsScript(*_) -> str:
         """Requests a file name to save the file to."""
 
-        return filedialog.asksaveasfilename(
-            filetypes=[("Haskell Scripts", ".hs")]
-            )
+        return filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
