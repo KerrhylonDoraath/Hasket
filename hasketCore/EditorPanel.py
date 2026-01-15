@@ -1,5 +1,12 @@
+"""Common editor panel for haskell development.
+
+This inherits from the GenericPanel to create a panel that will
+sit in the Hasket Window.
+"""
+
 from collections.abc import Callable
-from tkinter import *
+
+from tkinter import Frame, Label, Text, Scrollbar
 from tkinter import messagebox
 
 from typing import override
@@ -35,29 +42,34 @@ class EditorPanel(GenericPanel):
         self.__initial = self.__editorPanel.get("1.0", "end")
 
     def __setBindings(self) -> None:
-        self.__editorPanel.bind("<Control-s>",
-                                lambda event: ScriptIO.saveScript(
-                                    fileName=self._scriptPath + self._scriptName,
-                                    text=self.__editorPanel.get(
-                                        "1.0", "end")
-                                )
-                                )
-        self.__editorPanel.bind("<Control-Shift-S>",
-                                lambda event: ScriptIO.saveScript(
-                                    fileName=None,
-                                    text=self.__editorPanel.get(
-                                        "1.0", "end")
-                                    )
-                                )
-        self.__editorPanel.bind("<Control-o>",
-                                lambda event: self.openScript()
-                                )
-        self.__editorPanel.bind("<Control-n>",
-                                lambda event: self.newScript()
-                                )
-        self.__editorPanel.bind("<KeyRelease>",
-                                lambda event: self.__checkModified()
-                                )
+        self.__editorPanel.bind(
+            "<Control-s>",
+            lambda event: ScriptIO.saveScript(
+                fileName=self._scriptPath + self._scriptName,
+                text=self.__editorPanel.get(
+                    "1.0", "end")
+            )
+        )
+        self.__editorPanel.bind(
+            "<Control-Shift-S>",
+            lambda event: ScriptIO.saveScript(
+                fileName=None,
+                text=self.__editorPanel.get(
+                    "1.0", "end")
+            )
+        )
+        self.__editorPanel.bind(
+            "<Control-o>",
+            lambda event: self.openScript()
+        )
+        self.__editorPanel.bind(
+            "<Control-n>",
+            lambda event: self.newScript()
+        )
+        self.__editorPanel.bind(
+            "<KeyRelease>",
+            lambda event: self.__checkModified()
+        )
 
     @override
     def loadPanel(self):
@@ -82,12 +94,13 @@ class EditorPanel(GenericPanel):
         self.__mScrollbar.pack_forget()
 
     def __checkModified(self):
-        if (self.__editorPanel.get(
-                "1.0",
-                "end"
-                ) != self.__initial
-        and self.__modified != True):
-            self.__modified = True
+        if not self.__modified:
+            #No point comparing if already modified, so save time
+            if (self.__editorPanel.get(
+                    "1.0",
+                    "end"
+                    ) != self.__initial):
+                self.__modified = True
 
 
     def _checkSave(self) -> bool | None:
@@ -116,13 +129,15 @@ class EditorPanel(GenericPanel):
             func(self)
         return wrap
 
-    def _restartEditor(self, scriptPath: str ="", scriptName: str ="") -> None:
+    def _restartEditor(self, scriptPath: str ="",
+                       scriptName: str ="", text: str | None =None) -> None:
         self._scriptName = scriptName
         self._scriptPath = scriptPath
         self.__editorPanel.delete("1.0", "end")
+        if text:
+            self.__editorPanel.insert("1.0", text)
         self.__initial = self.__editorPanel.get("1.0", "end")
         self.__modified = False
-
 
     @__funcSave
     def newScript(self, *_) -> None:
@@ -130,14 +145,8 @@ class EditorPanel(GenericPanel):
 
     @__funcSave
     def openScript(self, *_) -> None:
-        return
-        self.scriptName, text = ScriptIO.importScriptEntry()  # Get import name and text
-        self.__editorPanel.delete("1.0", END)
-        self.__editorPanel.insert("1.0", text)
-        self.__editorPanel.edit_modified(False)
-        # Even if we have no text, nothing will be put in so we need not check
-        self.MODIFIED = False
-        ##Planning to deprecate
+        self._scriptPath, self._scriptName, text = ScriptIO.importScriptEntry()  # Get import name and text
+        self._restartEditor(self._scriptPath, self._scriptName, text)
 
     @__funcSave
     @override
