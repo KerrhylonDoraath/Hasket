@@ -51,7 +51,7 @@ class ScriptIO:
         """Validates the filename."""
 
         if not fileName or fileName == "Untitled":
-            fileName = ScriptIO._saveAsScript()[0]
+            fileName = ScriptIO._saveAsScript()
             if not fileName:
                 return ""
             if fileName[-3:] != ".hs":
@@ -79,17 +79,17 @@ class ScriptIO:
         try:
             with open(fileName, "w") as mFile:
                 mFile.write(text)
-                messagebox.showinfo(
-                    "Success",
-                    f"Successfully saved to file: {fileName}!"
-                )
-                return 0
         except OSError:
             messagebox.showerror(
                 "Error",
                 f"Unable to open file: {fileName}"
             )
-        return -1
+            return -1
+        messagebox.showinfo(
+            "Success",
+            f"Successfully saved to file: {fileName}!"
+        )
+        return 0
 
     # SAVE AS SCRIPT
     @staticmethod
@@ -97,4 +97,5 @@ class ScriptIO:
         """Requests a file name to save the file to."""
 
         return filedialog.asksaveasfilename(
-            filetypes=[("Haskell Scripts", ".hs")])
+            filetypes=[("Haskell Scripts", ".hs")]
+            )
