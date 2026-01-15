@@ -8,6 +8,7 @@ from tkinter import *
 import tkinter.messagebox
 import tkinter.filedialog
 import threading
+from typing import override
 
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.EditorPanel import EditorPanel
@@ -185,15 +186,15 @@ class EditorTerminalOut(GenericPanel):
             except Exception as e:
                 pass
 
-    def __del__(self):
+    @override
+    def deletePanel(self) -> None:
         self.RUNNING = False
         try:
             self.mProcess.stdin.write(" :quit\r\n")
             self.mProcess.stdin.flush()
             self.mProcess.kill()
-        except:
+        except OSError:
             pass
-
 
     def writeConfigFile(self):
         try:
@@ -439,7 +440,7 @@ class HasketWindow():
 
     def deleteAll(self):
         for x in self.panelDictionaries:
-            x["Class"].__del__()
+            x["Class"].deletePanel()
             del x["Class"]
 
 if __name__ == "__main__":
