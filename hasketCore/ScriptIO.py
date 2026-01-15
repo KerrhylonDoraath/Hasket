@@ -73,7 +73,7 @@ class ScriptIO:
             (str) fileName: Name of the file to save.
             (str) text:     Text to write to the file.
 
-        Returns:
+        Returns:    int, (str str str)
             result (int):
                  0: Success.
                  1: Filename was invalid, or operation was cancelled.
@@ -101,3 +101,29 @@ class ScriptIO:
         """Requests a file name to save the file to."""
 
         return filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
+
+    @staticmethod
+    def writeConfigFile(inputString: str) -> int:
+        """Writes to the HaskConf.cfg configuration file.
+
+        Parameters:
+              (str) inputString: Text to write to the file.
+
+        Returns:    int
+            result (int):
+                0: Success.
+                1: OSError occurred
+        """
+
+        try:
+            with open("HaskConf.cfg", "a") as configFile:
+                configFile.write(inputString)
+            return 0
+        except OSError:
+            return 1
+
+    @staticmethod
+    def writeConfigFileN(inputString: str) -> int:
+        """Same as writeConfigFile, just adds a newline character."""
+
+        return ScriptIO.writeConfigFile(inputString + "\n")

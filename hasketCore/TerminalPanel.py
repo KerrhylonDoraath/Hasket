@@ -3,11 +3,13 @@ from typing import override
 import os
 import subprocess
 import threading
-from tkinter import Frame, Text, Scrollbar, Tk, Label, Entry, Button, PhotoImage
+from tkinter import Frame, Text, Scrollbar
 import tkinter.messagebox
 
-from hasketCore.GenericPanel import GenericPanel
 from hasketCore._FindInterpreter import findGHCI
+from hasketCore.GenericPanel import GenericPanel
+from hasketCore.ScriptIO import ScriptIO
+
 
 class EditorTerminalOut(GenericPanel):
     def __init__(self, master):
@@ -55,7 +57,7 @@ class EditorTerminalOut(GenericPanel):
         self.__entryLine.pack_forget()
 
     # Input from the user in terminal mode
-    def submitTerminalEntry(self, event):
+    def submitTerminalEntry(self, *_):
         mEntry = self.__entryLine.get("1.0", "end")
         self.__entryLine.delete("0.0", "end")
         while mEntry[0] == '\n':
@@ -82,7 +84,7 @@ class EditorTerminalOut(GenericPanel):
         self.__mainTextWidget.delete("1.0", "end")
         self.__mainTextWidget.config(state="disabled")
 
-    def focusReset(self, *ignore):
+    def focusReset(self, *_):
         self.__entryLine.focus_set()
 
     # The terminal can have some commands
@@ -142,7 +144,7 @@ class EditorTerminalOut(GenericPanel):
                 if os.path.isfile(mPath):
                     valid = True
                     self._GHCILoc = mPath
-                    self.writeConfigFile()
+                    ScriptIO.writeConfigFile(self._GHCILoc)
         if valid:
             self._process = subprocess.Popen([mPath], shell=True, stdin=subprocess.PIPE,
                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -164,13 +166,6 @@ class EditorTerminalOut(GenericPanel):
                 self._outputPipe(line)
             except RuntimeError:
                 pass
-
-    def writeConfigFile(self):
-        try:
-            with open("HaskConf.cfg", "a") as configFile:
-                configFile.write(f"config: {self._GHCILoc}\n")
-        except OSError:
-            pass
 
     @override
     def deletePanel(self) -> None:
