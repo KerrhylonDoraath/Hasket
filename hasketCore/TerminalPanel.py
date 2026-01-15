@@ -7,6 +7,7 @@ from tkinter import Frame, Text, Scrollbar, Tk, Label, Entry, Button, PhotoImage
 import tkinter.messagebox
 
 from hasketCore.GenericPanel import GenericPanel
+from hasketCore._FindInterpreter import findGHCI
 
 class EditorTerminalOut(GenericPanel):
     def __init__(self, master):
@@ -125,7 +126,7 @@ class EditorTerminalOut(GenericPanel):
 
     def startGHCI(self, found=None):
         valid = False
-        mPath = ""
+        mPath = None
 
         if found:
             if os.path.isfile(found):
@@ -136,7 +137,7 @@ class EditorTerminalOut(GenericPanel):
                 return False
 
         if not self._GHCILoc:
-            mPath = self.FindGHCi()
+            mPath = findGHCI()
             if mPath:
                 if os.path.isfile(mPath):
                     valid = True
@@ -180,58 +181,3 @@ class EditorTerminalOut(GenericPanel):
                 configFile.write(f"config: {self._GHCILoc}\n")
         except OSError:
             pass
-
-    def FindGHCi(self):
-        def getReturn():
-            global returnString
-            returnString = mEntry.get()
-            if returnString[-1] == "\n":
-                returnString = returnString[:-1]
-            temp.destroy()
-
-        # if tkinter.messagebox.askyesno("GHCi not found", "GHCi was not found in the configuration file, or the configuration file is not present. Would you like to specify where GHCi is located?"):
-        if tkinter.messagebox.askyesno("GHCi not found",
-                                       "Would you like to specify the location of ghci.exe?"):
-            temp = Tk()
-            temp.title("Locate GHCi")
-            temp.resizable(False, False)
-            temp.iconbitmap("HASKET.ico")
-            temp.geometry("520x175")
-            temp.config(bg="#404040")
-
-            Label(temp, text="Please enter location of GHCi executable").pack(side="top", padx=10,
-                                                                              pady=(10, 5))
-
-            middleFrame = Frame(temp, background="#404040")
-            middleFrame.pack(side="top", padx=10)
-
-            mEntry = Entry(middleFrame, width=64)
-            mEntry.pack(side="right", padx=10, pady=(10, 0))
-            mEntry.bind("<Return>", lambda event: getReturn())
-
-            imgFrame = Frame(middleFrame, background="white", highlightthickness=2,
-                             highlightbackground="black", highlightcolor="black")
-            imgFrame.pack(side="left", padx=10, pady=10, expand=True)
-
-            img = PhotoImage(file="Haskell.png")
-            mLabel = Label(imgFrame, image=img)
-            mLabel.pack(padx=2, pady=2)
-
-            mBFrame = Frame(temp, bg="#000080")
-            mBFrame.pack(side="bottom", pady=(0, 10))
-
-            mSubmitButton = Button(mBFrame, text="Submit", command=lambda: getReturn())
-            mSubmitButton.pack(side="left", padx=5, pady=5)
-
-            mCancelButton = Button(mBFrame, text="Cancel", command=lambda: temp.destroy())
-            mCancelButton.pack(side="right", padx=5, pady=5)
-            mEntry.focus_set()
-            temp.grab_set()
-            temp.wait_window()
-
-            try:
-                return returnString
-            except NameError:
-                return None
-        else:
-            return None
