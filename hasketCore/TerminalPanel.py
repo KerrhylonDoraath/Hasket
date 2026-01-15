@@ -162,8 +162,15 @@ class EditorTerminalOut(GenericPanel):
                 break
             try:
                 self._outputPipe(line)
-            except Exception as e:
+            except RuntimeError:
                 pass
+
+    def writeConfigFile(self):
+        try:
+            with open("HaskConf.cfg", "a") as configFile:
+                configFile.write(f"config: {self._GHCILoc}\n")
+        except OSError:
+            pass
 
     @override
     def deletePanel(self) -> None:
@@ -172,12 +179,5 @@ class EditorTerminalOut(GenericPanel):
             self._process.stdin.write(" :quit\r\n")
             self._process.stdin.flush()
             self._process.kill()
-        except OSError:
-            pass
-
-    def writeConfigFile(self):
-        try:
-            with open("HaskConf.cfg", "a") as configFile:
-                configFile.write(f"config: {self._GHCILoc}\n")
-        except OSError:
+        except AttributeError:
             pass

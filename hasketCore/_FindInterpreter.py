@@ -7,7 +7,7 @@ class __FindInterpreter:
         self.temp.title("Locate GHCi")
         self.temp.resizable(False, False)
         self.temp.iconbitmap("HASKET.ico")
-        self.temp.geometry("520x175")
+        self.temp.geometry("460x125")
         self.temp.config(bg="#404040")
 
         self.attemptString = ""
@@ -26,14 +26,6 @@ class __FindInterpreter:
         self.mEntry = Entry(middleFrame, width=64)
         self.mEntry.pack(side="right", padx=10, pady=(10, 0))
         self.mEntry.bind("<Return>", lambda event: self.getReturn())
-
-        imgFrame = Frame(middleFrame, background="white", highlightthickness=2,
-                         highlightbackground="black", highlightcolor="black")
-        imgFrame.pack(side="left", padx=10, pady=10, expand=True)
-
-        img = PhotoImage(file="Haskell.png")
-        mLabel = Label(imgFrame, image=img)
-        mLabel.pack(padx=2, pady=2)
 
         mBFrame = Frame(self.temp, bg="#000080")
         mBFrame.pack(side="bottom", pady=(0, 10))
@@ -54,6 +46,8 @@ class __FindInterpreter:
         self.temp.wait_window()
 
 def findGHCI() -> str | None:
+    """Simple proceedure to find GHCI on the user's computer."""
+
     if tkinter.messagebox.askyesno("GHCi not found",
                                    "Would you like to specify the location of ghci.exe?"):
         locator = __FindInterpreter()
