@@ -5,6 +5,8 @@ Hasket is a python based program that is designed to create a lightweight shell 
 The code contains options for extending Hasket functionality to include custom panels and designs for customisation and
 extensions of practicality.
 
+<b>Please note GHCI must already be present on the client system to use Hasket. </b>
+
 ## Features
 
 ### The terminal Window
