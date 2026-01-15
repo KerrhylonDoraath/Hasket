@@ -78,9 +78,14 @@ class ScriptIO:
             (str) text:     Text to write to the file.
 
         Returns:
-            (int)  0: Success.
-            (int)  1: Filename was invalid, or operation was cancelled.
-            (int) -1: OSError occurred
+            result (int):
+                 0: Success.
+                 1: Filename was invalid, or operation was cancelled.
+                -1: OSError occurred
+            textVariables (tuple(str, str, str))
+                [0]: File path
+                [1]: File name
+                [2]: File contents
         """
 
         fileName = ScriptIO._validateFileName(fileName)
