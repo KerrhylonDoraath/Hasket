@@ -15,8 +15,7 @@ class EditorPanel(GenericPanel):
         self._mode = "EDITOR"
         self._scriptName = "Untitled"
         self._scriptPath = ""
-        self._modified = False
-        self.__operating = True
+        self.__modified = False
 
         self.__fileTitleFrame = Frame(master, bg="#000080")
         self.__fileTitleLabel = Label(master=self.__fileTitleFrame, bg="white",
@@ -87,17 +86,12 @@ class EditorPanel(GenericPanel):
                 "1.0",
                 "end"
                 ) != self.__initial
-        and self._modified != True):
+        and self.__modified != True):
+            self.__modified = True
 
-            self.setModified(True)
 
-    def setModified(self, modified: bool =False) -> None:
-        self._modified = modified
-        print(f"Set modified to {modified}")
-
-    # Prompts saving
     def _checkSave(self) -> bool | None:
-        if self._modified:
+        if self.__modified:
             return messagebox.askyesnocancel(
                 "Warning",
                 f"Save changes to {self._scriptName}?",
@@ -127,7 +121,7 @@ class EditorPanel(GenericPanel):
         self._scriptPath = scriptPath
         self.__editorPanel.delete("1.0", "end")
         self.__initial = self.__editorPanel.get("1.0", "end")
-        self.setModified(False)
+        self.__modified = False
 
 
     @__funcSave
@@ -144,20 +138,6 @@ class EditorPanel(GenericPanel):
         # Even if we have no text, nothing will be put in so we need not check
         self.MODIFIED = False
         ##Planning to deprecate
-
-    def saveScript(self, *ignore):
-        self._scriptName = ScriptIO.saveScript(self.scriptName,
-                                              self.__editorPanel)  # save script
-        self.setWindowTitle()
-        self.__editorPanel.edit_modified(False)
-        self.MODIFIED = False  # Reset the modified tags
-
-    def saveAsScript(self, *ignore):
-        self.scriptName = ScriptIO.saveScript(ScriptIO.saveAsScript(),
-                                              self.__editorPanel)  # save as...
-        self.setWindowTitle()
-        self.__editorPanel.edit_modified(False)
-        self.MODIFIED = False  # Reset the modified tags
 
     @__funcSave
     @override
