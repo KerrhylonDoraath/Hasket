@@ -100,8 +100,10 @@ class EditorPanel(GenericPanel):
             if (self.__editorPanel.get(
                     "1.0",
                     "end"
-                    ) != self.__initial):
+                    ) != self.__initial
+            and self.__editorPanel.focus_get()):
                 self.__modified = True
+                self.__fileTitleLabel.config(text=self._scriptName + "*")
 
 
     def _checkSave(self) -> bool | None:
@@ -133,33 +135,37 @@ class EditorPanel(GenericPanel):
         return wrap
 
     def _restartEditor(self, scriptPath: str ="",
-                       scriptName: str ="", text: str | None =None) -> None:
+                       scriptName: str ="Untitled", text: str | None =None) -> None:
+
+        self._master.focus_set()
         self._scriptName = scriptName
         self._scriptPath = scriptPath
         self.__editorPanel.delete("1.0", "end")
+        self.__editorPanel.focus_set()
+
         if text:
             self.__editorPanel.insert("1.0", text)
-        self.__initial = self.__editorPanel.get("1.0", "end")
+            self.__initial = self.__editorPanel.get("1.0", "end")
+            self.__editorPanel.delete("end-1c", "end")
+        else:
+            self.__initial = self.__editorPanel.get("1.0", "end")
+
+        self.__fileTitleLabel.config(text=self._scriptName)
         self.__modified = False
 
     def _saveScript(self, filename: bool = False) -> None:
-        result = None
         if not filename:
             result, fileattr = ScriptIO.saveScript(
                 fileName=None,
                 text=self.__editorPanel.get("1.0", "end")
             )
-            if not result:
-                self._scriptPath = fileattr[0]
-                self._scriptName = fileattr[1]
         else:
-            result, _ = ScriptIO.saveScript(
+            result, fileattr = ScriptIO.saveScript(
                 fileName=self._scriptPath+self._scriptName,
                 text=self.__editorPanel.get("1.0", "end")
             )
         if result == 0:
-            self.__initial = self.__editorPanel.get("1.0", "end")
-            self.__modified = False
+            self._restartEditor(fileattr[0], fileattr[1], fileattr[2])
 
     @__funcSave
     def newScript(self, *_) -> None:
