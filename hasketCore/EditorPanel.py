@@ -135,7 +135,8 @@ class EditorPanel(GenericPanel):
         return wrap
 
     def _restartEditor(self, scriptPath: str ="",
-                       scriptName: str ="Untitled", text: str | None =None) -> None:
+                       scriptName: str ="Untitled", text: str | None =None,
+                       fromSave: bool = False) -> None:
 
         self._master.focus_set()
         self._scriptName = scriptName
@@ -145,8 +146,12 @@ class EditorPanel(GenericPanel):
 
         if text:
             self.__editorPanel.insert("1.0", text)
-            self.__initial = self.__editorPanel.get("1.0", "end")
-            self.__editorPanel.delete("end-1c", "end")
+            if not fromSave:
+                self.__initial = self.__editorPanel.get("1.0", "end")
+                self.__editorPanel.delete("end-1c", "end")
+            else:
+                self.__editorPanel.delete("end-1c", "end")
+                self.__initial = self.__editorPanel.get("1.0", "end")
         else:
             self.__initial = self.__editorPanel.get("1.0", "end")
 
@@ -165,7 +170,7 @@ class EditorPanel(GenericPanel):
                 text=self.__editorPanel.get("1.0", "end")
             )
         if result == 0:
-            self._restartEditor(fileattr[0], fileattr[1], fileattr[2])
+            self._restartEditor(fileattr[0], fileattr[1], fileattr[2], True)
 
     @__funcSave
     def newScript(self, *_) -> None:
