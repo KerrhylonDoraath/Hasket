@@ -28,10 +28,14 @@ The terminal also has additional commands implemented in Hasket:
 ## Style Guides for future additions
 
 This project will generally conform to established <a href="https://peps.python.org/pep-0008/">PEP-8</a> style guides
-for python with one notable exception:
+for python with a few notable exceptions:
 
 - Class methods and members shall conform to `mixedCase` convention. This is because
 I like this standard and arguably this is my project.
+
+- Line length shall be no more than 100 characters. This is to ensure that logic is not overly complicated per line
+but to relieve cases where 79 charcters is just restrictive.
+- Closing parenthesis does not need to go on a separate line.
 
 Variable names inside of functions do not have to follow any specific naming conventions.
 
