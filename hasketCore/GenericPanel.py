@@ -16,6 +16,9 @@ class GenericPanel:
         self._mode = "UNDEFINED"
         self._outputPipe = self.printOut
 
+    def getMode(self) -> str:
+        """Returns the mode of the panel."""
+        return self._mode
 
     def setOutPipe(self, output: GenericPanel) -> None:
         """Sets the output pipe."""
