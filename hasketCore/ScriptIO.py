@@ -1,4 +1,6 @@
-"""Standard interface for managing files.
+"""Hasket Script IO
+
+Standard interface for managing files.
 Provides methods to save a script, or import a script.
 
 Purely an IO library, so does not deal with any

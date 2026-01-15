@@ -1,20 +1,23 @@
-"""Common editor panel for haskell development.
+"""Hasket Editor Panel
+
+Common editor panel for haskell development.
 
 This inherits from the GenericPanel to create a panel that will
-sit in the Hasket Window.
+sit in the Hasket Window. The editor is the main place to
+input into the program; an environment to write clean haskell code.
+
+It does not have many responsibilities other than holding text, and loading
+scripts. It works well when paired with a terminal panel.
 """
 
 from collections.abc import Callable
-
 from tkinter import Frame, Label, Text, Scrollbar
 from tkinter import messagebox
-
 from typing import override
 
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.ScriptIO import ScriptIO
 
-##TEXT EDITOR
 class EditorPanel(GenericPanel):
 
     def __init__(self, master):
@@ -73,6 +76,8 @@ class EditorPanel(GenericPanel):
 
     @override
     def loadPanel(self):
+        """Loads this panel to the master widget."""
+
         self.__fileTitleFrame.pack(side="top", anchor="w",
                                    expand=False, fill="x",
                                    padx=2, pady=2)
@@ -88,6 +93,8 @@ class EditorPanel(GenericPanel):
 
     @override
     def unloadPanel(self):
+        """Unloads the panel from the master widget."""
+
         self.__fileTitleLabel.pack_forget()
         self.__fileTitleFrame.pack_forget()
         self.__editorPanel.pack_forget()
@@ -114,7 +121,9 @@ class EditorPanel(GenericPanel):
         return False
 
     @staticmethod
-    def __funcSave(func: Callable):
+    def __funcSave(func: Callable) -> Callable:
+        """Checks if a file is to be saved before it leaves the editor."""
+
         def wrap(self) -> None:
             checking = self._checkSave()
             if checking is None:
@@ -141,14 +150,20 @@ class EditorPanel(GenericPanel):
 
     @__funcSave
     def newScript(self, *_) -> None:
+        """Clears the editor and loads a new script."""
+
         self._restartEditor("", "Untitled")
 
     @__funcSave
     def openScript(self, *_) -> None:
-        self._scriptPath, self._scriptName, text = ScriptIO.importScriptEntry()  # Get import name and text
+        """Opens a script and loads it into the editor."""
+
+        self._scriptPath, self._scriptName, text = ScriptIO.importScriptEntry()
         self._restartEditor(self._scriptPath, self._scriptName, text)
 
     @__funcSave
     @override
     def deletePanel(self) -> None:
+        """Deletes the panel."""
+
         pass
