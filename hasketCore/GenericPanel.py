@@ -40,3 +40,8 @@ class GenericPanel:
         """
 
         print(text)
+
+    def deletePanel(self) -> None:
+        """Callback when the panel is deleted."""
+
+        pass
