@@ -35,12 +35,21 @@ class ScriptIO:
         return itemName
 
     @staticmethod
+    def __extractName(itemName: str) -> str:
+        if itemName[-1] not in ("\\", "/"):
+            return ScriptIO.__extractName(itemName[:-1]) + itemName[-1]
+        return ""
+
+    @staticmethod
     def _importScript(scriptName: str) -> tuple[str, str, str]:
         """Imports a script and returns its name and contents."""
 
         try:
             with open(scriptName, "r") as mEntry:
-                return ScriptIO.__extractPath(scriptName), scriptName, mEntry.read()
+                print()
+                return (ScriptIO.__extractPath(scriptName),
+                        ScriptIO.__extractName(scriptName),
+                        mEntry.read())
         except OSError:
             messagebox.showerror(
                 "Error",
@@ -62,7 +71,7 @@ class ScriptIO:
 
     # SAVING SCRIPT
     @staticmethod
-    def saveScript(fileName : str | None, text : str) -> int:
+    def saveScript(fileName : str | None, text : str) -> tuple [int, tuple[str, str, str] | None]:
         """Saves a script to a file.
 
         Parameters:
@@ -77,7 +86,7 @@ class ScriptIO:
 
         fileName = ScriptIO._validateFileName(fileName)
         if fileName ==  "":
-            return 1
+            return 1, None
         try:
             with open(fileName, "w") as mFile:
                 mFile.write(text)
@@ -86,14 +95,13 @@ class ScriptIO:
                 "Error",
                 f"Unable to open file: {fileName}"
             )
-            return -1
+            return -1, None
         messagebox.showinfo(
             "Success",
             f"Successfully saved to file: {fileName}!"
         )
-        return 0
+        return 0, ScriptIO._importScript(fileName)
 
-    # SAVE AS SCRIPT
     @staticmethod
     def _saveAsScript(*_) -> str:
         """Requests a file name to save the file to."""
