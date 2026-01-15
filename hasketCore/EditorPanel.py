@@ -47,20 +47,14 @@ class EditorPanel(GenericPanel):
     def __setBindings(self) -> None:
         self.__editorPanel.bind(
             "<Control-s>",
-            lambda event: ScriptIO.saveScript(
-                fileName=self._scriptPath + self._scriptName,
-                text=self.__editorPanel.get(
-                    "1.0", "end")
-            )
+            lambda event: self._saveScript(True)
         )
+
         self.__editorPanel.bind(
             "<Control-Shift-S>",
-            lambda event: ScriptIO.saveScript(
-                fileName=None,
-                text=self.__editorPanel.get(
-                    "1.0", "end")
-            )
+            lambda event: self._saveScript(False)
         )
+
         self.__editorPanel.bind(
             "<Control-o>",
             lambda event: self.openScript()
@@ -147,6 +141,25 @@ class EditorPanel(GenericPanel):
             self.__editorPanel.insert("1.0", text)
         self.__initial = self.__editorPanel.get("1.0", "end")
         self.__modified = False
+
+    def _saveScript(self, filename: bool = False) -> None:
+        result = None
+        if not filename:
+            result, fileattr = ScriptIO.saveScript(
+                fileName=None,
+                text=self.__editorPanel.get("1.0", "end")
+            )
+            if not result:
+                self._scriptPath = fileattr[0]
+                self._scriptName = fileattr[1]
+        else:
+            result, _ = ScriptIO.saveScript(
+                fileName=self._scriptPath+self._scriptName,
+                text=self.__editorPanel.get("1.0", "end")
+            )
+        if result == 0:
+            self.__initial = self.__editorPanel.get("1.0", "end")
+            self.__modified = False
 
     @__funcSave
     def newScript(self, *_) -> None:
