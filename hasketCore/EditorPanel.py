@@ -16,6 +16,7 @@ class EditorPanel(GenericPanel):
         self._scriptName = "Untitled"
         self._scriptPath = ""
         self._modified = False
+        self.__operating = True
 
         self.__fileTitleFrame = Frame(master, bg="#000080")
         self.__fileTitleLabel = Label(master=self.__fileTitleFrame, bg="white",
@@ -32,29 +33,31 @@ class EditorPanel(GenericPanel):
         self.__editorPanel.config(yscrollcommand=self.__mScrollbar.set)
 
         self.__setBindings()
+        self.__initial = self.__editorPanel.get("1.0", "end")
 
     def __setBindings(self) -> None:
         self.__editorPanel.bind("<Control-s>",
                                 lambda event: ScriptIO.saveScript(
                                     fileName=self._scriptPath + self._scriptName,
-                                    textToSave=self.__editorPanel.get(
+                                    text=self.__editorPanel.get(
                                         "1.0", "end")
                                 )
                                 )
         self.__editorPanel.bind("<Control-Shift-S>",
                                 lambda event: ScriptIO.saveScript(
                                     fileName=None,
-                                    textToSave=self.__editorPanel.get(
+                                    text=self.__editorPanel.get(
                                         "1.0", "end")
-                                )
+                                    )
                                 )
         self.__editorPanel.bind("<Control-o>",
                                 lambda event: self.openScript()
                                 )
         self.__editorPanel.bind("<Control-n>",
-                                lambda event: self.newScript())
-        self.__editorPanel.bind("<<Modified>>",
-                                lambda event: self.setModified(True)
+                                lambda event: self.newScript()
+                                )
+        self.__editorPanel.bind("<KeyRelease>",
+                                lambda event: self.__checkModified()
                                 )
 
     @override
@@ -75,8 +78,18 @@ class EditorPanel(GenericPanel):
     @override
     def unloadPanel(self):
         self.__fileTitleLabel.pack_forget()
+        self.__fileTitleFrame.pack_forget()
         self.__editorPanel.pack_forget()
         self.__mScrollbar.pack_forget()
+
+    def __checkModified(self):
+        if (self.__editorPanel.get(
+                "1.0",
+                "end"
+                ) != self.__initial
+        and self._modified != True):
+
+            self.setModified(True)
 
     def setModified(self, modified: bool =False) -> None:
         self._modified = modified
@@ -96,16 +109,16 @@ class EditorPanel(GenericPanel):
     @staticmethod
     def __funcSave(func: Callable):
         def wrap(self) -> None:
-            print(self)
             checking = self._checkSave()
             if checking is None:
                 return
             elif checking:
-                ScriptIO.saveScript(self._scriptPath + self._scriptName,
+                if ScriptIO.saveScript(self._scriptPath + self._scriptName,
                                     self.__editorPanel.get(
                                         "1.0", "end"
                                         )
-                                    )
+                                    ) != 0:
+                    return
             func(self)
         return wrap
 
@@ -113,13 +126,12 @@ class EditorPanel(GenericPanel):
         self._scriptName = scriptName
         self._scriptPath = scriptPath
         self.__editorPanel.delete("1.0", "end")
-        self.__editorPanel.edit_modified(False)
-        self._modified = False
+        self.__initial = self.__editorPanel.get("1.0", "end")
+        self.setModified(False)
 
 
     @__funcSave
     def newScript(self, *_) -> None:
-        print("Wow it worked")
         self._restartEditor("", "Untitled")
 
     @__funcSave
@@ -148,8 +160,6 @@ class EditorPanel(GenericPanel):
         self.MODIFIED = False  # Reset the modified tags
 
     @__funcSave
-    def __del__(self):
-        self.__fileTitleLabel.destroy()
-        self.__fileTitleFrame.destroy()
-        self.__mScrollbar.destroy()
-        self.__editorPanel.destroy()
+    @override
+    def deletePanel(self) -> None:
+        pass
