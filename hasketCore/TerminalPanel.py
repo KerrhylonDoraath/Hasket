@@ -6,6 +6,7 @@ import threading
 from tkinter import Frame, Text, Scrollbar
 import tkinter.messagebox
 
+from hasketCore.EditorPanel import EditorPanel
 from hasketCore._FindInterpreter import findGHCI
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.ScriptIO import ScriptIO
@@ -186,6 +187,9 @@ class EditorTerminalOut(GenericPanel):
                 self._outputPipe(line)
             except RuntimeError:
                 pass
+
+    def bindEditor(self, editor: EditorPanel):
+        self._boundEditor = editor
 
     @override
     def deletePanel(self) -> None:

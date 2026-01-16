@@ -75,7 +75,6 @@ class HasketWindow():
                 if fileString[-1] == "\n":
                     fileString = fileString[:-1]
                 terminal = self.searchDictionary("TERMINAL")
-                print(fileString)
                 if terminal["Class"].startGHCI(fileString):
                     blockLoc = True
         
