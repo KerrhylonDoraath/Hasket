@@ -1,4 +1,4 @@
-from tkinter import Entry, Frame, Tk, Label, Button, PhotoImage
+from tkinter import Entry, Frame, Tk, Label, Button
 import tkinter.messagebox
 
 class __FindInterpreter:
@@ -46,7 +46,7 @@ class __FindInterpreter:
         self.temp.wait_window()
 
 def findGHCI() -> str | None:
-    """Simple proceedure to find GHCI on the user's computer."""
+    """Simple procedure to find GHCI on the user's computer."""
 
     if tkinter.messagebox.askyesno("GHCi not found",
                                    "Would you like to specify the location of ghci.exe?"):

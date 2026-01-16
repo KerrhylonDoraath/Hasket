@@ -32,7 +32,7 @@ class EditorTerminalOut(GenericPanel):
         self.__mScrollbar = Scrollbar(self.__microFrame, orient="vertical", width=20,
                                       command=self.__mainTextWidget.yview)
         self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
-        self.__mainTextWidget.bind("<FocusIn>",lambda event: self.focusReset())
+        self.__mainTextWidget.bind("<FocusIn>",lambda event: self._focusReset())
 
     def _testGHCI(self):
         if not self._running:
@@ -93,7 +93,7 @@ class EditorTerminalOut(GenericPanel):
         self.__mainTextWidget.delete("1.0", "end")
         self.__mainTextWidget.config(state="disabled")
 
-    def focusReset(self, *_):
+    def _focusReset(self, *_):
         self.__entryLine.focus_set()
 
     def _commLoadEditor(self) -> None:
@@ -160,23 +160,33 @@ class EditorTerminalOut(GenericPanel):
 
         return False
 
-    def startGHCI(self, found: str | None =None):
+    def startGHCI(self, found: str | None =None) -> bool:
+        """Attempts to start GHCi.
+
+        Parameters:
+            (str | None) found = None: Potential path to ghci.exe
+
+        Returns:
+             True: Successfully loaded ghci.
+             False: Could not complete loading.
+        """
 
         valid = self._findGHCI(found)
         if valid:
-            self._process = subprocess.Popen([self._GHCILoc], shell=True, stdin=subprocess.PIPE,
+            self._process = subprocess.Popen([self._GHCILoc],
+                                             shell=True, stdin=subprocess.PIPE,
                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                              text=True)
             self._running = True
             self._GHCIThread = threading.Thread(target=self._updater, daemon=True)
             self._GHCIThread.start()
+            return True
         else:
             if self._GHCIThread:
                 tkinter.messagebox.showwarning("Hasket", "GHCi is already running.")
             else:
                 tkinter.messagebox.showwarning("Hasket", "GHCi could not be started.")
-
-        return True
+            return False
 
     def _updater(self):
         while True:
@@ -190,11 +200,18 @@ class EditorTerminalOut(GenericPanel):
             except RuntimeError:
                 pass
 
-    def bindEditor(self, editor: EditorPanel):
+    def bindEditor(self, editor: EditorPanel) -> None:
+        """Binds the provided editor panel to the terminal.
+
+        Parameters
+            (EditorPanel) editor: Editor panel to bind.
+        """
         self._boundEditor = editor
 
     @override
     def deletePanel(self) -> None:
+        """Deletes the panel."""
+
         self._running = False
         try:
             self.__entryLine.delete("1.0", "end")

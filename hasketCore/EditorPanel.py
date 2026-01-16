@@ -124,15 +124,15 @@ class EditorPanel(GenericPanel):
 
     def _saveScript(self, filename: bool = False) -> None:
         if not filename:
-            result, fileattr = ScriptIO.saveScript(
+            result, fileAttr = ScriptIO.saveScript(
                 fileName=None,
                 text=self.__editorPanel.get("1.0", "end"))
         else:
-            result, fileattr = ScriptIO.saveScript(
+            result, fileAttr = ScriptIO.saveScript(
                 fileName=self._scriptPath+self._scriptName,
                 text=self.__editorPanel.get("1.0", "end"))
         if result == 0:
-            self._restartEditor(fileattr[0], fileattr[1], fileattr[2], True)
+            self._restartEditor(fileAttr[0], fileAttr[1], fileAttr[2], True)
 
     def getFilePath(self) -> str:
         """Returns the full path of the file in the editor."""

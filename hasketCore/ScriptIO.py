@@ -127,3 +127,18 @@ class ScriptIO:
         """Same as writeConfigFile, just adds a newline character."""
 
         return ScriptIO.writeConfigFile(inputString + "\n")
+
+    @staticmethod
+    def readConfigFile() -> list[str] | None:
+        importData = []
+        try:
+            with open("HaskConf.cfg", "r") as configFile:
+                mData = configFile.readline()
+                while mData != "":
+                    importData.append(mData)
+                    mData = configFile.readline()
+                return importData
+        except OSError:
+            messagebox.showwarning("Warning",
+                                    "The Hasket configuration file could not be found.")
+            return None

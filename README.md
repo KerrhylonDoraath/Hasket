@@ -36,7 +36,7 @@ for python with a few notable exceptions:
 I like this standard and arguably this is my project.
 
 - Line length shall be no more than 100 characters. This is to ensure that logic is not overly complicated per line
-but to relieve cases where 79 charcters is just restrictive.
+but to relieve cases where 79 characters is just restrictive.
 - Closing parenthesis does not need to go on a separate line.
 
 Variable names inside of functions do not have to follow any specific naming conventions.
