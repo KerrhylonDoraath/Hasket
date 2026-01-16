@@ -168,7 +168,7 @@ class EditorTerminalOut(GenericPanel):
                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                              text=True)
             self._running = True
-            self._GHCIThread = threading.Thread(target=self._updater)
+            self._GHCIThread = threading.Thread(target=self._updater, daemon=True)
             self._GHCIThread.start()
         else:
             if self._GHCIThread:
@@ -179,7 +179,9 @@ class EditorTerminalOut(GenericPanel):
         return True
 
     def _updater(self):
-        while self._running:
+        while True:
+            if not self._running:
+                break
             line = self._process.stdout.readline()
             if not line:
                 break
@@ -195,8 +197,9 @@ class EditorTerminalOut(GenericPanel):
     def deletePanel(self) -> None:
         self._running = False
         try:
-            self._process.stdin.write(" :quit\r\n")
-            self._process.stdin.flush()
+            self.__entryLine.delete("1.0", "end")
+            self.__entryLine.insert("1.0", ":quit\r\n")
+            self._submitTerminalEntry()
             self._process.kill()
         except AttributeError:
             pass

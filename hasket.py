@@ -39,7 +39,6 @@ class HasketWindow():
         mEntry = self.searchDictionary("EDITOR")
 
         mTerminal["Class"].bindEditor(mEntry["Class"])
-        mEntry["Class"].setTitleCommand(self.setFileTitle)
 
         self.loadConfigFile()
 
@@ -109,6 +108,7 @@ class HasketWindow():
         self.panels[-1].bind("<Button-1>", lambda event: self.swapMode(panelName))
         return self.panels[-1]
 
+
     def generateWindow(self):
         #Initialise the window
         self.__root = Tk()
@@ -132,7 +132,6 @@ class HasketWindow():
         self.drawSpace.pack(side="bottom", padx=30, expand=True, fill="both", pady=(0, 30))
 
         self.__root.bind("<Control-Tab>", lambda e: self.nextPanel())
-        self.__root.bind("<Destroy>", lambda event: self.onDelete(event))
 
     def searchDictionary(self, nameID):
         for entry in self.panelDictionaries:
