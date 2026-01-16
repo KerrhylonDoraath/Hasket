@@ -134,6 +134,10 @@ class EditorPanel(GenericPanel):
         if result == 0:
             self._restartEditor(fileattr[0], fileattr[1], fileattr[2], True)
 
+    def getFilePath(self) -> str:
+        """Returns the full path of the file in the editor."""
+        return self._scriptPath + self._scriptName
+
     @__funcSave
     def newScript(self, *_) -> None:
         """Clears the editor and loads a new script."""

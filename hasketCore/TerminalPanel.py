@@ -19,6 +19,7 @@ class EditorTerminalOut(GenericPanel):
         self._GHCIThread = None
         self._GHCILoc = None
         self._process = None
+        self._boundEditor = None
 
         self.__microFrame = Frame(master, highlightthickness=0, highlightcolor="#000080")
         self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, state="disabled",
@@ -26,13 +27,19 @@ class EditorTerminalOut(GenericPanel):
                                      highlightcolor="white", insertbackground="white")
         self.__entryLine = Text(master, height=1, bg="black", fg="white", highlightthickness=1,
                                 highlightcolor="white", insertbackground="white")
-        self.__entryLine.bind("<Return>", lambda event: self.submitTerminalEntry(event))
+        self.__entryLine.bind("<Return>", lambda event: self._submitTerminalEntry())
         self.__mScrollbar = Scrollbar(self.__microFrame, orient="vertical", width=20,
                                       command=self.__mainTextWidget.yview)
         self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
-        self.__mainTextWidget.bind("<FocusIn>",self.focusReset)
+        self.__mainTextWidget.bind("<FocusIn>",lambda event: self.focusReset())
 
-        self.boundEditor = None
+    def _testGHCI(self):
+        if not self._running:
+            self.startGHCI()
+            if not self._running:
+                self._outputPipe(
+                    "Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+
 
     @override
     def loadPanel(self):
@@ -43,11 +50,7 @@ class EditorTerminalOut(GenericPanel):
         self.__mainTextWidget.focus()
         self.__entryLine.focus_set()
 
-        if not self._running:
-            self.startGHCI()
-            if not self._running:
-                self._outputPipe(
-                    "Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+        self._testGHCI()
 
     @override
     def unloadPanel(self):
@@ -56,21 +59,26 @@ class EditorTerminalOut(GenericPanel):
         self.__microFrame.pack_forget()
         self.__entryLine.pack_forget()
 
-    # Input from the user in terminal mode
-    def submitTerminalEntry(self, *_):
+    def _collectLine(self) -> str | None:
         mEntry = self.__entryLine.get("1.0", "end")
         self.__entryLine.delete("0.0", "end")
+        if len(mEntry) == 0:
+            return None
         while mEntry[0] == '\n':
             mEntry = mEntry[1:]
-        if mEntry[0] == "\\":
-            self.callCommandLibrary(mEntry[1:-1])
+        return mEntry
+
+
+    def _submitTerminalEntry(self) -> None:
+        possibleLine = self._collectLine()
+        if not possibleLine:
+            return
+        if possibleLine[0] == "\\":
+            self._callCommandLibrary(possibleLine[1:-1])
         else:
-            if len(mEntry) == 0:
-                return
-            ##Pipe entry to GHCi instead
-            self._process.stdin.write(mEntry)
+            self._process.stdin.write(possibleLine)
             self._process.stdin.flush()
-            self._outputPipe(mEntry)  ##pipe it to output
+            self._outputPipe(possibleLine)  ##pipe it to output
 
     @override
     def printOut(self, text: str) -> None:
@@ -87,77 +95,89 @@ class EditorTerminalOut(GenericPanel):
     def focusReset(self, *_):
         self.__entryLine.focus_set()
 
-    # The terminal can have some commands
-    def callCommandLibrary(self, mInput):
-        mInput = mInput.split(" ")
+    def _commLoadEditor(self) -> None:
+        if not self._boundEditor:
+            self._outputPipe("> No editor bound.\n")
+            return
+        if self._boundEditor.getFilePath() == "Untitled":
+            self._outputPipe("> Please save the contents of the editor.\n")
+            return
+        if not self._running:
+            self._outputPipe(
+                "> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+            return
+        mEntry = r'"' + self._boundEditor.getFilePath() + r'"'
+        mEntry = mEntry.encode("unicode_escape").decode()
 
+        try:
+            self._process.stdin.write(f":load {mEntry}\n")
+            self._process.stdin.flush()
+        except Exception as e:
+            self._outputPipe(f"> {e}\n")
+
+    def _commLoadScript(self, parameters: list[str]) -> None:
+        if len(parameters) == 2:
+            if not self._running:
+                self._outputPipe(
+                    "> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
+                return
+            rawIn = parameters[1].encode("unicode_escape").decode()
+            self._process.stdin.write(f":load {rawIn}\n")
+            self._process.stdin.flush()
+        elif len(parameters) >= 3:
+            self._outputPipe("> Please only specify one script.\n")
+        else:
+            self._outputPipe("> Please specify a haskell script to load.\n")
+
+    def _callCommandLibrary(self, mInput):
+        mInput = mInput.split(" ")
         if mInput[0] == "loadEditor":
-            try:
-                if self.boundEditor.scriptName == "Untitled" or not self.boundEditor.scriptName:
-                    self._outputPipe("> Please save the contents of the editor.\n")
-                    return
-                if not self._running:
-                    self._outputPipe(
-                        "> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
-                    return
-                mEntry = r'"' + self.boundEditor.scriptName + r'"'
-                mEntry = mEntry.encode("unicode_escape").decode()
-                self._process.stdin.write(f":load {mEntry}\n")
-                self._process.stdin.flush()
-            except Exception as e:
-                self._outputPipe(f"> {e}\n")
+            self._commLoadEditor()
         elif mInput[0] == "restart":
             self.startGHCI()
-
         elif mInput[0] == "clear":
             self.clearOutput()
-
         elif mInput[0] == "load":
-            if len(mInput) == 2:
-                if not self._running:
-                    self._outputPipe(
-                        "> Could not start GHCi. Please run command \\restart to restart GHCi.\n")
-                    return
-                rawIn = mInput[1].encode("unicode_escape").decode()
-                self._process.stdin.write(f":load {rawIn}\n")
-                self._process.stdin.flush()
-            else:
-                self._outputPipe("> Please specify a haskell script to load.\n")
+            self._commLoadScript(mInput)
         else:
-            self._outputPipe("> Unknown Command.\n")
+            self._outputPipe(f"> Unknown Command: {mInput[0]}\n")
 
-    def startGHCI(self, found=None):
-        valid = False
-        mPath = None
-
+    def _findGHCI(self, found: str | None) -> bool:
         if found:
             if os.path.isfile(found):
-                valid = True
                 self._GHCILoc = found
-                mPath = self._GHCILoc
-            else:
-                return False
+                return True
+            return False
 
-        if not self._GHCILoc:
+        elif not self._GHCILoc:
             mPath = findGHCI()
             if mPath:
                 if os.path.isfile(mPath):
-                    valid = True
                     self._GHCILoc = mPath
                     ScriptIO.writeConfigFile(self._GHCILoc)
+                    return True
+
+        return False
+
+    def startGHCI(self, found: str | None =None):
+
+        valid = self._findGHCI(found)
         if valid:
-            self._process = subprocess.Popen([mPath], shell=True, stdin=subprocess.PIPE,
+            self._process = subprocess.Popen([self._GHCILoc], shell=True, stdin=subprocess.PIPE,
                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                              text=True)
             self._running = True
-            self._GHCIThread = threading.Thread(target=self.updater)
+            self._GHCIThread = threading.Thread(target=self._updater)
             self._GHCIThread.start()
         else:
-            tkinter.messagebox.showerror("Hasket", "GHCi could not be started.")
+            if self._GHCIThread:
+                tkinter.messagebox.showwarning("Hasket", "GHCi is already running.")
+            else:
+                tkinter.messagebox.showwarning("Hasket", "GHCi could not be started.")
 
         return True
 
-    def updater(self):
+    def _updater(self):
         while self._running:
             line = self._process.stdout.readline()
             if not line:
