@@ -1,9 +1,12 @@
-# Hasket Development
+# Hasket Version 1.1 (Release for Python 3.10)
 
-Hasket is a python based program that is designed to create a lightweight shell in python for streamlined writing of Haskell code.
+Hasket is a python based program that is designed to create a lightweight shell in for streamlined writing of Haskell
+code.
 
 The code contains options for extending Hasket functionality to include custom panels and designs for customisation and
 extensions of practicality.
+
+<b>A working version of python (at least 3.10) must be present to use this system.</b>
 
 <b>Please note GHCI must already be present on the client system to use Hasket. </b>
 
@@ -21,10 +24,12 @@ the window, press enter, and the command will run.
 The terminal also has additional commands implemented in Hasket:
 
 ***
+
 - `\loadEditor` - If a program has been saved in the editor, then this command will load the script as if imported.
 - `\restart` - Will attempt to restart GHCI if things have gone awry.
 - `\clear` - Will clear the terminal output window.
 - `\load <scriptPath>` - Will attempt to load the script provided
+
 ***
 
 ## Style Guides for future additions
@@ -33,20 +38,15 @@ This project will generally conform to established <a href="https://peps.python.
 for python with a few notable exceptions:
 
 - Class methods and members shall conform to `mixedCase` convention. This is because
-I like this standard and arguably this is my project.
+  I like this standard and arguably this is my project.
 
 - Line length shall be no more than 100 characters. This is to ensure that logic is not overly complicated per line
-but to relieve cases where 79 characters is just restrictive.
+  but to relieve cases where 79 characters is just restrictive.
 - Closing parenthesis does not need to go on a separate line.
 
 Variable names inside of functions do not have to follow any specific naming conventions.
 
 ***
-
-Class members that are public are to be named starting with a lowercase `m`. This distinguishes
-them as member variables. 
-
-Examples include: `mVector` `mParam1` `mAccelleration`
 
 <i>Note: Inheritance is a key part of including additional window tabs in Hasket.
 If a new tab is created, please implement all base methods. To practice public and non-public standards,
