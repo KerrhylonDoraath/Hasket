@@ -1,4 +1,4 @@
-def lineParse(inputLines: list[str]) -> list[tuple [str, str]]:
+def lineParse(inputLines: list[str]) -> list[tuple[str, str]]:
     """Iterates through provided strings
     to separate words by the first ": ".
 
@@ -11,11 +11,12 @@ def lineParse(inputLines: list[str]) -> list[tuple [str, str]]:
     resultSet = []
     for line in inputLines:
         scanner = ""
-        mode="keyword"
+        mode = "keyword"
         entry = []
         for x in line:
             if x == ":" and mode == "keyword":
                 mode = "parameter"
+
                 entry.append(scanner)
                 scanner = ""
                 continue

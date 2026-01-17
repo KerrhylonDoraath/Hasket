@@ -18,6 +18,7 @@ from typing import override
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.ScriptIO import ScriptIO
 
+
 class EditorPanel(GenericPanel):
 
     def __init__(self, master):
@@ -27,7 +28,7 @@ class EditorPanel(GenericPanel):
         self._scriptPath = ""
         self._modified = False
         self._initial = "\n"
-
+        self._ignoreModified = True
         self.__fileTitleFrame = Frame(master, bg="#000080")
         self.__fileTitleLabel = Label(master=self.__fileTitleFrame, bg="white",
                                       highlightthickness=1, fg="black",
@@ -47,7 +48,8 @@ class EditorPanel(GenericPanel):
         self.__editorPanel.bind("<Control-Shift-S>", lambda event: self._saveScript(False))
         self.__editorPanel.bind("<Control-o>", lambda event: self.openScript())
         self.__editorPanel.bind("<Control-n>", lambda event: self.newScript())
-        self.__editorPanel.bind("<KeyRelease>", lambda event: self.__checkModified())
+        self.__editorPanel.bind("<KeyRelease>", self.__checkModified)
+        self.__editorPanel.bind("<KeyPress>", self.__blockadeModified)
 
     @override
     def loadPanel(self):
@@ -68,19 +70,25 @@ class EditorPanel(GenericPanel):
         self.__editorPanel.pack_forget()
         self.__mScrollbar.pack_forget()
 
-    def __checkModified(self):
-        if not self._modified:
-            #No point comparing if already modified, so save time
-            if (self.__editorPanel.get("1.0","end") != self._initial
+    def __blockadeModified(self, event):
+        if (event.keycode == 17):
+            self._ignoreModified = True
+
+    def __checkModified(self, event):
+        if not self._modified and not self._ignoreModified:
+            # No point comparing if already modified, so save time
+            if (self.__editorPanel.get("1.0", "end") != self._initial
                     and self.__editorPanel.focus_get()):
 
                 self._modified = True
                 self.__fileTitleLabel.config(text=self._scriptName + "*")
+        elif self._ignoreModified and event.keycode == 17:
+            self._ignoreModified = False
 
     def _checkSave(self) -> bool | None:
         if self._modified:
             return messagebox.askyesnocancel("Warning",
-                f"Save changes to {self._scriptName}?", icon="warning")
+                                             f"Save changes to {self._scriptName}?", icon="warning")
         return False
 
     @staticmethod
@@ -93,14 +101,16 @@ class EditorPanel(GenericPanel):
                 return
             elif checking:
                 if (ScriptIO.saveScript(self._scriptPath + self._scriptName,
-                        self.__editorPanel.get("1.0", "end")) != 0):
+                                        self.__editorPanel.get("1.0", "end")) != 0):
                     return
             func(self)
+
         return wrap
 
-    def _restartEditor(self, scriptPath: str ="",
-                       scriptName: str ="Untitled", text: str | None =None,
-                       fromSave: bool = False) -> None:
+    def _restartEditor(
+            self, scriptPath: str = "",
+            scriptName: str = "Untitled", text: str | None = None,
+            fromSave: bool = False) -> None:
 
         self._master.focus_set()
         self._scriptName = scriptName
@@ -129,7 +139,7 @@ class EditorPanel(GenericPanel):
                 text=self.__editorPanel.get("1.0", "end"))
         else:
             result, fileAttr = ScriptIO.saveScript(
-                fileName=self._scriptPath+self._scriptName,
+                fileName=self._scriptPath + self._scriptName,
                 text=self.__editorPanel.get("1.0", "end"))
         if result == 0:
             self._restartEditor(fileAttr[0], fileAttr[1], fileAttr[2], True)
@@ -147,9 +157,12 @@ class EditorPanel(GenericPanel):
     @__funcSave
     def openScript(self, *_) -> None:
         """Opens a script and loads it into the editor."""
-
-        self._scriptPath, self._scriptName, text = ScriptIO.importScriptEntry()
-        self._restartEditor(self._scriptPath, self._scriptName, text)
+        paramPath, paramName, text = ScriptIO.importScriptEntry()
+        if not (paramPath == "" and paramName == "Untitled"):
+            self._restartEditor(paramPath, paramName, text)
+        else:
+            self._restartEditor(self._scriptPath, self._scriptName,
+                                self.__editorPanel.get("1.0", "end"), True)
 
     @__funcSave
     @override

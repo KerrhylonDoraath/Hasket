@@ -3,7 +3,7 @@ from typing import override
 import os
 import subprocess
 import threading
-from tkinter import Frame, Text, Scrollbar
+from tkinter import Frame, Text, Scrollbar, TclError
 import tkinter.messagebox
 
 from hasketCore.EditorPanel import EditorPanel
@@ -32,7 +32,7 @@ class EditorTerminalOut(GenericPanel):
         self.__mScrollbar = Scrollbar(self.__microFrame, orient="vertical", width=20,
                                       command=self.__mainTextWidget.yview)
         self.__mainTextWidget.config(yscrollcommand=self.__mScrollbar.set)
-        self.__mainTextWidget.bind("<FocusIn>",lambda event: self._focusReset())
+        self.__mainTextWidget.bind("<FocusIn>", lambda event: self._focusReset())
 
     def _testGHCI(self):
         if not self._running:
@@ -40,7 +40,6 @@ class EditorTerminalOut(GenericPanel):
             if not self._running:
                 self._outputPipe(
                     "Could not start GHCi. Please run command \\restart to restart GHCi.\n")
-
 
     @override
     def loadPanel(self):
@@ -68,7 +67,6 @@ class EditorTerminalOut(GenericPanel):
         while mEntry[0] == '\n':
             mEntry = mEntry[1:]
         return mEntry
-
 
     def _submitTerminalEntry(self) -> None:
         possibleLine = self._collectLine()
@@ -155,12 +153,12 @@ class EditorTerminalOut(GenericPanel):
             if mPath:
                 if os.path.isfile(mPath):
                     self._GHCILoc = mPath
-                    ScriptIO.writeConfigFile(self._GHCILoc)
+                    ScriptIO.writeConfigFile(f"config: {self._GHCILoc}\n")
                     return True
 
         return False
 
-    def startGHCI(self, found: str | None =None) -> bool:
+    def startGHCI(self, found: str | None = None) -> bool:
         """Attempts to start GHCi.
 
         Parameters:
@@ -218,5 +216,5 @@ class EditorTerminalOut(GenericPanel):
             self.__entryLine.insert("1.0", ":quit\r\n")
             self._submitTerminalEntry()
             self._process.kill()
-        except AttributeError:
+        except TclError:
             pass

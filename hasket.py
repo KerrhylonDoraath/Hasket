@@ -1,13 +1,13 @@
 ##hasket.py - A pythonic interface for developing haskell.
 
-#IMPORTS
+# IMPORTS
 from tkinter import *
 
 from hasketCore.EditorPanel import EditorPanel
+from hasketCore.GenericPanel import GenericPanel
 from hasketCore.TerminalPanel import EditorTerminalOut
 from hasketCore.ScriptIO import ScriptIO
 from hasketCore.Utils import lineParse
-
 
 STATE_INACTIVE = "#D0D0D0"
 STATE_ACTIVE = "#FFFFFF"
@@ -17,7 +17,8 @@ CONFIG_FILE_TOKENS = ["config"]
 WINDOW_TITLE = "Hasket"
 VERSION = "1.1"
 
-#Main window
+
+# Main window
 class HasketWindow:
     def __init__(self):
         self._outputPipe = None
@@ -49,12 +50,21 @@ class HasketWindow:
                 if entry[0] == "config":
                     terminal = self.searchDictionary("TERMINAL")
                     terminal["Class"].startGHCI(entry[1])
-        
-    def start(self):
+
+    def start(self) -> None:
+        """Starts Hasket."""
+
         self.loadPanel("TERMINAL")
         self.__root.mainloop()
-        
-    def createPanel(self, textName, panelClass):
+
+    def createPanel(self, textName: str, panelClass: type[GenericPanel]) -> None:
+        """Creates a new panel, and adds it to the panel list.
+
+        Parameters:
+            (str) textName:                ID of the panel to create.
+            type[GenericPanel] panelClass: Class of the panel to create.
+        """
+
         mTempObject = panelClass(self.__drawSpace)
         self._panelDictionaries.append({"ID": textName,
                                         "Class": mTempObject,
@@ -66,7 +76,6 @@ class HasketWindow:
         self._panels[-1].pack(side=LEFT, padx=2, pady=2)
         self._panels[-1].bind("<Button-1>", lambda event: self.swapMode(panelName))
         return self._panels[-1]
-
 
     def _generateWindow(self):
         self.__root.geometry("800x500")
@@ -80,43 +89,63 @@ class HasketWindow:
         self.__drawSpace.pack(side="bottom", padx=30, expand=True, fill="both", pady=(0, 30))
 
         self.__root.bind("<Control-Tab>", lambda e: self.nextPanel())
+        self.__root.bind("<<Destroy>>", lambda e: self._onDelete())
 
-    def searchDictionary(self, nameID):
+    def searchDictionary(self, nameID: str) -> type[str, type[GenericPanel], type[Label]] | None:
+        """Searches for a panel with the given ID.
+
+        Parameters:
+            (str) nameID:   ID of the panel to search.
+
+        Returns:
+            type[str, type[GenericPanel], type[Label]]: The entry related to the searched panel.
+            None:  If there is no entry for the given ID.
+        """
+
         for entry in self._panelDictionaries:
             if entry["ID"] == nameID:
                 return entry
         return None
 
-    def unloadCurrentPanel(self):
+    def unloadCurrentPanel(self) -> None:
+        """Unloads the currently active panel."""
+
         if self.searchDictionary(self._mode):
             entry = self.searchDictionary(self._mode)
             entry["Class"].unloadPanel()
             entry["Label"].config(bg=STATE_INACTIVE)
 
-    def loadPanel(self, panelID):
+    def loadPanel(self, panelID: str) -> None:
+        """Attempts to load the panel with the given ID."""
+
         if self.searchDictionary(panelID):
             entry = self.searchDictionary(panelID)
             entry["Class"].loadPanel()
             self._mode = panelID
             entry["Label"].config(bg=STATE_ACTIVE)
 
-    def swapMode(self, newPanel):
+    def swapMode(self, newPanel: str) -> None:
+        """Swaps the loaded panel with the panel of given ID."""
+
         self.unloadCurrentPanel()
         self.loadPanel(newPanel)
 
-    def nextPanel(self):
+    def nextPanel(self) -> None:
+        """Moves the currently active panel to the next one."""
+
         if self._mode == "UNDEFINED":
             self.swapMode(self._panelDictionaries[0]["ID"])
         else:
             mEntry = self.searchDictionary(self._mode)
             mIndex = self._panelDictionaries.index(mEntry)
-            mIndex = (mIndex+1) % len(self._panelDictionaries)
+            mIndex = (mIndex + 1) % len(self._panelDictionaries)
             self.swapMode(self._panelDictionaries[mIndex]["ID"])
 
-    def __del__(self):
+    def _onDelete(self):
         for x in self._panelDictionaries:
             x["Class"].deletePanel()
             del x["Class"]
+
 
 if __name__ == "__main__":
     mWindow = HasketWindow()

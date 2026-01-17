@@ -10,6 +10,7 @@ panels.
 
 from tkinter import filedialog, messagebox
 
+
 class ScriptIO:
 
     @staticmethod
@@ -24,13 +25,13 @@ class ScriptIO:
 
         foundFile = filedialog.askopenfilename(filetypes=[("Haskell Scripts", ".hs")])
         if not foundFile:
-            return "", "", ""
+            return "", "Untitled", ""
         return ScriptIO._importScript(foundFile)
 
     @staticmethod
     def __extractPath(itemName: str) -> str:
         if itemName[-1] not in ("\\", "/"):
-          return ScriptIO.__extractPath(itemName[:-1])
+            return ScriptIO.__extractPath(itemName[:-1])
         return itemName
 
     @staticmethod
@@ -53,7 +54,7 @@ class ScriptIO:
             return "", "", ""
 
     @staticmethod
-    def _validateFileName(fileName : str | None) -> str:
+    def _validateFileName(fileName: str | None) -> str:
         """Validates the filename."""
 
         if not fileName or fileName == "Untitled":
@@ -66,7 +67,7 @@ class ScriptIO:
 
     # SAVING SCRIPT
     @staticmethod
-    def saveScript(fileName : str | None, text : str) -> tuple [int, tuple[str, str, str] | None]:
+    def saveScript(fileName: str | None, text: str) -> tuple[int, tuple[str, str, str] | None]:
         """Saves a script to a file.
 
         Parameters:
@@ -85,7 +86,7 @@ class ScriptIO:
         """
 
         fileName = ScriptIO._validateFileName(fileName)
-        if fileName ==  "":
+        if fileName == "":
             return 1, None
         try:
             with open(fileName, "w") as mFile:
@@ -140,5 +141,5 @@ class ScriptIO:
                 return importData
         except OSError:
             messagebox.showwarning("Warning",
-                                    "The Hasket configuration file could not be found.")
+                                   "The Hasket configuration file could not be found.")
             return None

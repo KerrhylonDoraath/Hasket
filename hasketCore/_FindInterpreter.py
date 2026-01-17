@@ -1,6 +1,7 @@
 from tkinter import Entry, Frame, Tk, Label, Button
 import tkinter.messagebox
 
+
 class __FindInterpreter:
     def __init__(self):
         self.temp = Tk()
@@ -13,11 +14,10 @@ class __FindInterpreter:
         self.attemptString = ""
         self.__constructGeometry()
 
-        self.mEntry.focus_set()
-        self.temp.grab_set()
+        self.mEntry.focus_force()
 
     def __constructGeometry(self):
-        Label(self.temp, text="Please enter location of GHCi executable")\
+        Label(self.temp, text="Please enter location of GHCi executable") \
             .pack(side="top", padx=10, pady=(10, 5))
 
         middleFrame = Frame(self.temp, background="#404040")
@@ -44,6 +44,7 @@ class __FindInterpreter:
 
     def awaitWindow(self) -> None:
         self.temp.wait_window()
+
 
 def findGHCI() -> str | None:
     """Simple procedure to find GHCI on the user's computer."""
