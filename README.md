@@ -1,4 +1,4 @@
-# Hasket Version 1.1 (Release for Python 3.10)
+# Hasket Version 1.1 (Release for Python 3.10+)
 
 Hasket is a python based program that is designed to create a lightweight shell in for streamlined writing of Haskell
 code.
@@ -29,6 +29,15 @@ The terminal also has additional commands implemented in Hasket:
 - `\restart` - Will attempt to restart GHCI if things have gone awry.
 - `\clear` - Will clear the terminal output window.
 - `\load <scriptPath>` - Will attempt to load the script provided
+
+***
+
+### Editor Commands
+
+- `Ctrl-s` Save script
+- `Ctrl-Shift-s` Save As script
+- `Ctrl-o` Open script
+- `Ctrl-n` New script
 
 ***
 
