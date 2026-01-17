@@ -1,5 +1,3 @@
-from typing import override
-
 import os
 import subprocess
 import threading
@@ -41,7 +39,6 @@ class EditorTerminalOut(GenericPanel):
                 self._outputPipe(
                     "Could not start GHCi. Please run command \\restart to restart GHCi.\n")
 
-    @override
     def loadPanel(self):
         self.__microFrame.pack(expand=True, fill="both", padx=2, pady=(0, 2))
         self.__entryLine.pack(side="bottom", fill="x", expand=False, padx=2, pady=(5, 2))
@@ -52,7 +49,6 @@ class EditorTerminalOut(GenericPanel):
 
         self._testGHCI()
 
-    @override
     def unloadPanel(self):
         self.__mainTextWidget.pack_forget()
         self.__mScrollbar.pack_forget()
@@ -79,7 +75,6 @@ class EditorTerminalOut(GenericPanel):
             self._process.stdin.flush()
             self._outputPipe(possibleLine)  ##pipe it to output
 
-    @override
     def printOut(self, text: str) -> None:
         self.__mainTextWidget.config(state="normal")
         self.__mainTextWidget.insert("end", text)
@@ -206,7 +201,6 @@ class EditorTerminalOut(GenericPanel):
         """
         self._boundEditor = editor
 
-    @override
     def deletePanel(self) -> None:
         """Deletes the panel."""
 

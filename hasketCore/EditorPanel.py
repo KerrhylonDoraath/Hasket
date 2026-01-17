@@ -13,7 +13,6 @@ scripts. It works well when paired with a terminal panel.
 from collections.abc import Callable
 from tkinter import Frame, Label, Text, Scrollbar
 from tkinter import messagebox
-from typing import override
 
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.ScriptIO import ScriptIO
@@ -51,7 +50,6 @@ class EditorPanel(GenericPanel):
         self.__editorPanel.bind("<KeyRelease>", self.__checkModified)
         self.__editorPanel.bind("<KeyPress>", self.__blockadeModified)
 
-    @override
     def loadPanel(self):
         """Loads this panel to the master widget."""
 
@@ -61,7 +59,6 @@ class EditorPanel(GenericPanel):
         self.__editorPanel.pack(side="left", fill="both", expand=True, padx=(2, 0), pady=(0, 2))
         self.__editorPanel.focus()
 
-    @override
     def unloadPanel(self):
         """Unloads the panel from the master widget."""
 
@@ -71,7 +68,7 @@ class EditorPanel(GenericPanel):
         self.__mScrollbar.pack_forget()
 
     def __blockadeModified(self, event):
-        if (event.keycode == 17):
+        if event.keycode == 17:
             self._ignoreModified = True
 
     def __checkModified(self, event):
@@ -165,7 +162,6 @@ class EditorPanel(GenericPanel):
                                 self.__editorPanel.get("1.0", "end"), True)
 
     @__funcSave
-    @override
     def deletePanel(self) -> None:
         """Deletes the panel."""
 

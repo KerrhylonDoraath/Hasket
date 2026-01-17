@@ -7,6 +7,7 @@ except its precise implementation is left up to the programmer.
 
 from tkinter import Widget
 
+
 class GenericPanel:
 
     def __init__(self, master: Widget):
@@ -20,17 +21,15 @@ class GenericPanel:
         """Returns the mode of the panel."""
         return self._mode
 
-    def setOutPipe(self, output: GenericPanel) -> None:
+    def setOutPipe(self, output) -> None:
         """Sets the output pipe."""
 
         self._outputPipe = output.printOut
-
 
     def loadPanel(self) -> None:
         """Loads the editor panel into the master's context."""
 
         pass
-
 
     def unloadPanel(self) -> None:
         """Unloads the editor panel from the master's context."""
