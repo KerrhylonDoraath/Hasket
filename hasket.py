@@ -6,7 +6,7 @@ from tkinter import *
 from hasketCore.EditorPanel import EditorPanel
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.TerminalPanel import EditorTerminalOut
-from hasketCore.SamplePanel import SamplePanel
+#from hasketCore.SamplePanel import SamplePanel
 from hasketCore.ScriptIO import ScriptIO
 from hasketCore.Utils import lineParse
 
