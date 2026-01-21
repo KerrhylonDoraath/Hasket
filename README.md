@@ -12,7 +12,7 @@ extensions of practicality.
 
 ## Features
 
-### The terminal Window
+### The Terminal Window
 
 !["Working Terminal Window"](resources/HasketTerminal.png)
 
@@ -32,12 +32,21 @@ The terminal also has additional commands implemented in Hasket:
 
 ***
 
+### The Editor
+
 ### Editor Commands
+
+The editor is the primary method to write haskell code inside the program.
+It doesn't yet have any IDE tools, but it is a very light entry.
 
 - `Ctrl-s` Save script
 - `Ctrl-Shift-s` Save As script
 - `Ctrl-o` Open script
 - `Ctrl-n` New script
+
+***
+
+Pressing `Control-Tab` will cycle through any loaded panels in Hasket.
 
 ***
 
@@ -56,6 +65,9 @@ for python with a few notable exceptions:
 Variable names inside of functions do not have to follow any specific naming conventions.
 
 ***
+
+
+
 
 <i>Note: Inheritance is a key part of including additional window tabs in Hasket.
 If a new tab is created, please implement all base methods. To practice public and non-public standards,

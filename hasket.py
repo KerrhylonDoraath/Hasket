@@ -6,6 +6,7 @@ from tkinter import *
 from hasketCore.EditorPanel import EditorPanel
 from hasketCore.GenericPanel import GenericPanel
 from hasketCore.TerminalPanel import EditorTerminalOut
+from hasketCore.SamplePanel import SamplePanel
 from hasketCore.ScriptIO import ScriptIO
 from hasketCore.Utils import lineParse
 
@@ -24,7 +25,7 @@ class HasketWindow:
         self._outputPipe = None
         self._panels = []
         self._panelDictionaries = []
-        self._mode = "UNDEFINED"
+        self._loadedPanelID = "UNDEFINED"
 
         self.__root = Tk()
         self.__panelBar = Frame(self.__root, bg="#000080")
@@ -110,8 +111,8 @@ class HasketWindow:
     def unloadCurrentPanel(self) -> None:
         """Unloads the currently active panel."""
 
-        if self.searchDictionary(self._mode):
-            entry = self.searchDictionary(self._mode)
+        if self.searchDictionary(self._loadedPanelID):
+            entry = self.searchDictionary(self._loadedPanelID)
             entry["Class"].unloadPanel()
             entry["Label"].config(bg=STATE_INACTIVE)
 
@@ -121,7 +122,7 @@ class HasketWindow:
         if self.searchDictionary(panelID):
             entry = self.searchDictionary(panelID)
             entry["Class"].loadPanel()
-            self._mode = panelID
+            self._loadedPanelID = panelID
             entry["Label"].config(bg=STATE_ACTIVE)
 
     def swapMode(self, newPanel: str) -> None:
@@ -133,10 +134,10 @@ class HasketWindow:
     def nextPanel(self) -> None:
         """Moves the currently active panel to the next one."""
 
-        if self._mode == "UNDEFINED":
+        if self._loadedPanelID == "UNDEFINED":
             self.swapMode(self._panelDictionaries[0]["ID"])
         else:
-            mEntry = self.searchDictionary(self._mode)
+            mEntry = self.searchDictionary(self._loadedPanelID)
             mIndex = self._panelDictionaries.index(mEntry)
             mIndex = (mIndex + 1) % len(self._panelDictionaries)
             self.swapMode(self._panelDictionaries[mIndex]["ID"])
@@ -149,4 +150,8 @@ class HasketWindow:
 
 if __name__ == "__main__":
     mWindow = HasketWindow()
+
+    #Adding a new panel.
+    #mWindow.createPanel("EXAMPLE", SamplePanel)
+
     mWindow.start()

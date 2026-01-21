@@ -22,7 +22,6 @@ class EditorPanel(GenericPanel):
 
     def __init__(self, master):
         GenericPanel.__init__(self, master)
-        self._mode = "EDITOR"
         self._scriptName = "Untitled"
         self._scriptPath = ""
         self._modified = False

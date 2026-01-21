@@ -13,7 +13,6 @@ from hasketCore.ScriptIO import ScriptIO
 class EditorTerminalOut(GenericPanel):
     def __init__(self, master):
         GenericPanel.__init__(self, master)
-        self._mode = "TERMINAL"
         self._running = False
         self._GHCIThread = None
         self._GHCILoc = None

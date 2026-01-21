@@ -14,12 +14,7 @@ class GenericPanel:
         """master parameter is for attaching to a valid tkinter context."""
 
         self._master = master
-        self._mode = "UNDEFINED"
         self._outputPipe = self.printOut
-
-    def getMode(self) -> str:
-        """Returns the mode of the panel."""
-        return self._mode
 
     def setOutPipe(self, output) -> None:
         """Sets the output pipe."""
