@@ -18,6 +18,7 @@ class EditorTerminalOut(GenericPanel):
         self._GHCILoc = None
         self._process = None
         self._boundEditor = None
+        self._awaitingCallback = False
 
         self.__microFrame = Frame(master, highlightthickness=0, highlightcolor="#000080")
         self.__mainTextWidget = Text(self.__microFrame, width=100, height=20, state="disabled",
@@ -61,19 +62,26 @@ class EditorTerminalOut(GenericPanel):
             return None
         while mEntry[0] == '\n':
             mEntry = mEntry[1:]
+            if len(mEntry) == 0:
+                return None
         return mEntry
 
     def _submitTerminalEntry(self) -> None:
         possibleLine = self._collectLine()
         if not possibleLine:
             return
+        if self._awaitingCallback:
+            self._outputPipe("> Please wait while GHCi reboots...\n")
+            return
         if possibleLine[0] == "\\":
             self._callCommandLibrary(possibleLine[1:-1])
         else:
-            self._process.stdin.write(possibleLine)
-            self._process.stdin.flush()
-            self._outputPipe(possibleLine)  ##pipe it to output
-
+            try:
+                self._process.stdin.write(possibleLine)
+                self._process.stdin.flush()
+                self._outputPipe(possibleLine)  ##pipe it to output
+            except OSError:
+                self._outputPipe("> GHCi has closed. Please run \\restart to restart GHCi.\n")
     def printOut(self, text: str) -> None:
         self.__mainTextWidget.config(state="normal")
         self.__mainTextWidget.insert("end", text)
@@ -127,7 +135,7 @@ class EditorTerminalOut(GenericPanel):
         if mInput[0] == "loadEditor":
             self._commLoadEditor()
         elif mInput[0] == "restart":
-            self.startGHCI()
+            self._restartGHCI()
         elif mInput[0] == "clear":
             self.clearOutput()
         elif mInput[0] == "load":
@@ -151,6 +159,18 @@ class EditorTerminalOut(GenericPanel):
                     return True
 
         return False
+
+    def _restartGHCI(self) -> None:
+        if self._running:
+            self._running = False
+            self._process.stdin.write(":quit\r\n")
+            self._process.stdin.flush()
+            self._process.kill()
+            self._process.stdout.flush()
+            self._awaitingCallback = True
+            self._outputPipe("> Please wait while GHCi reboots...\n")
+        else:
+            self.startGHCI(self._GHCILoc)
 
     def startGHCI(self, found: str | None = None) -> bool:
         """Attempts to start GHCi.
@@ -186,11 +206,17 @@ class EditorTerminalOut(GenericPanel):
                 break
             line = self._process.stdout.readline()
             if not line:
+                self._running = False
                 break
             try:
                 self._outputPipe(line)
             except RuntimeError:
                 pass
+        self._running = False
+        if self._awaitingCallback:
+            self._awaitingCallback = False
+            self.startGHCI(self._GHCILoc)
+
 
     def bindEditor(self, editor: EditorPanel) -> None:
         """Binds the provided editor panel to the terminal.
