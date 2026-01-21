@@ -1,225 +1,206 @@
 ##hasket.py - A pythonic interface for developing haskell.
-
-#IMPORTS
-import sys
-import os
-import subprocess
+import tkinter.colorchooser
+# IMPORTS
 from tkinter import *
-import tkinter.messagebox
-import tkinter.filedialog
-import threading
+#from tkinter import colorchooser
 
-#Title of the open file
-FILE_TITLE = "Untitled"
-MODIFIED = False
-WINDOW_TITLE = ""
-#MODE sets the usage of the text widget
-MODE = "TERMINAL"
-INITIAL_TEXT = ""
+from hasketCore.EditorPanel import EditorPanel
+from hasketCore.GenericPanel import GenericPanel
+from hasketCore.TerminalPanel import EditorTerminalOut
+#from hasketCore.SamplePanel import SamplePanel
+from hasketCore.ScriptIO import ScriptIO
+from hasketCore.Utils import lineParse
 
-#INITIALISING THE WINDOW
-root = Tk()
-root.geometry("800x500")
-root.config(bg="#404040")
-root.iconbitmap("HASKET.ico")
+STATE_INACTIVE = "#D0D0D0"
+STATE_ACTIVE = "#FFFFFF"
 
-#IMPORTING HASKELL SCRIPT
-def importScriptEntry(*ignore):
-    if SaveCheck():
-        saveScript()
-    mFile = tkinter.filedialog.askopenfile(filetypes=[("Haskell Scripts", ".hs")])
-    if not mFile:
-        return
-    importScript(mFile.name)
+CONFIG_FILE_TOKENS = ["config"]
 
-def importScript(scriptName):
-    global FILE_TITLE, secondaryTextWidget, mainTextWidget, INITIAL_TEXT
-    with open(scriptName, "r") as mEntry:
-        FILE_TITLE = scriptName
-        secondaryTextWidget.delete("1.0", END)
-        x = mEntry.readline()
-        while x != "":
-            secondaryTextWidget.insert(END, x)
-            x = mEntry.readline()
-    mainTextWidget.insert(END, f':load "{scriptName}"')
-    retrieveInput(True)
-    mainTextWidget.edit_modified(False)
-    CreateWindowTitle(scriptName)
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
+WINDOW_TITLE = "Hasket"
+VERSION = "1.1"
 
+DEFAULT_PANEL_COLOUR = "#808080"
+DEFAULT_ACCENT_COLOUR = "#000080"
 
-#Create Window Title
-def CreateWindowTitle(scriptName):
-    global WINDOW_TITLE, root
-    originalTitle = "Hasket 1.0"
-    WINDOW_TITLE = f"{scriptName} - {originalTitle}"
-    root.title(WINDOW_TITLE)
+# Main window
+class HasketWindow:
+    def __init__(self):
+        self._outputPipe = None
+        self._panels = []
+        self._panelDictionaries = []
+        self._loadedPanelID = "UNDEFINED"
 
-#Modified event callback
-def ModifiedText(*ignore):
-    global MODIFIED, secondaryTextWidget
-    if secondaryTextWidget.get("1.0", END) != INITIAL_TEXT:
-        CreateWindowTitle(f"*{FILE_TITLE}")
-        MODIFIED = True
+        self._backgroundColour = DEFAULT_PANEL_COLOUR
+        self._accentColour = DEFAULT_ACCENT_COLOUR
 
-#Saving Verification Link
-def SaveCheck():
-    if MODIFIED:
-        return tkinter.messagebox.askyesno("Save Changes", f"Save changes to {FILE_TITLE}?")
+        self.__root = Tk()
+        self.__panelBar = Frame(self.__root, bg=self._accentColour)
+        self.__paddingBar = Frame(self.__panelBar, bg=self._backgroundColour)
+        self.__drawSpace = Frame(self.__root, bg=self._accentColour)
 
-#CREATING NEW SCRIPT
-def newScript():
-    global FILE_TITLE, MODIFIED, secondaryTextWidget, INITIAL_TEXT
-    if SaveCheck():
-        saveScript()
-    FILE_TITLE = "Untitled"
-    CreateWindowTitle("Untitled")
-    secondaryTextWidget.delete("1.0", END)
-    MODIFIED = False
-    secondaryTextWidget.edit_modified(False)
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
+        self._generateWindow()
+        self._setMenubar()
 
-#SAVING SCRIPT
-def saveScript(fileName):
-    global MODIFIED, INITIAL_TEXT, FILE_TITLE
-    if fileName == None or fileName == "Untitled":
-        fileName = saveAsScript()
-        if fileName == None:
-            return
-        if fileName[-3:] != ".hs":
-            fileName += ".hs"
-    with open(fileName, "w") as mFile:
-        mFile.write(secondaryTextWidget.get("1.0", END))
-    CreateWindowTitle(fileName)
-    MODIFIED = False
-    INITIAL_TEXT = secondaryTextWidget.get("1.0", END)
-    FILE_TITLE = fileName
+        self.createPanel("TERMINAL", EditorTerminalOut)
+        self.createPanel("EDITOR", EditorPanel)
 
-#SAVE AS SCRIPT
-def saveAsScript(*ignore):
-    return tkinter.filedialog.asksaveasfilename(filetypes=[("Haskell Scripts", ".hs")])
+        mTerminal = self.searchDictionary("TERMINAL")
+        mEntry = self.searchDictionary("EDITOR")
+        mTerminal["Class"].bindEditor(mEntry["Class"])
 
-#MODE SWAP
-def swapMode(event):
-    global MODE, mainTextWidget, secondaryTextWidget
-    if event == "EDITOR":
-        MODE = "EDITOR"
-        ##Sets the editor set
-        EditorLabel.config(bg="white")
-        TerminalLabel.config(bg="#D0D0D0")
-        mainTextWidget.pack_forget()
-        secondaryTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-        secondaryTextWidget.focus()
-    else:
-        if MODIFIED:
-            tkinter.messagebox.showwarning("Warning", "Hasket cannot process the updated script until it is saved. It is recommended to go back and save your script.")
-        MODE = "TERMINAL"
-        ##Sets the terminal set
-        EditorLabel.config(bg="#D0D0D0")
-        TerminalLabel.config(bg="white")
-        secondaryTextWidget.pack_forget()
-        mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-        mainTextWidget.focus()
+        self._loadConfigFile()
+
+    def _selectAccentColour(self) -> None:
+        self._reloadAccentColour(tkinter.colorchooser.askcolor()[1])
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
+
+    def _selectBackgroundColour(self) -> None:
+        self._reloadBackgroundColour(tkinter.colorchooser.askcolor()[1])
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
+
+    def _setMenubar(self) -> None:
+        menubar = Menu(self.__root)
+        preferences = Menu(menubar, title="Preferences", tearoff=False)
+        preferences.add_command(label="Select Accent Colour", command=self._selectAccentColour)
+        preferences.add_command(label="Select Background Colour", command=self._selectBackgroundColour)
+        menubar.add_cascade(menu=preferences, label="Preferences")
+        self.__root.config(menu=menubar)
 
 
-def updater():
-    global mProcess, RUNNING, mainTextWidget
-    while RUNNING:
-        line = mProcess.stdout.readline()
-        if not line:
-            break
-        try:
-            mainTextWidget.insert(END, line)
-            mainTextWidget.see(END)
-        except Exception as e:
-            pass
-            
-##Reads the last line of the terminal
-def retrieveInput(addNewLine=False):
-    global mProcess, mainTextWidget
-    text = mainTextWidget.get("end-1c linestart", f"end-1c") + "\r\n"
-    if ":quit" in text:
-        tkinter.messagebox.showwarning("Warning", "Executing this may cause the program to stop running haskell scripts. Command aborted.")
-        return
-    mainTextWidget.insert(END, "\n" if addNewLine else "")
-    try:
-        mProcess.stdin.write(text)
-        mProcess.stdin.flush()
-    except OSError:
-        mainTextWidget.insert(END, "\nHASKELL has closed, cannot process command.\n")
-    mainTextWidget.see(END)
+    def _reloadBackgroundColour(self, newColour: str | None) -> None:
+        if not newColour:
+            newColour = self._backgroundColour
+        self._backgroundColour = newColour
+        self._reloadColours()
+        ScriptIO.rewriteConfigFile("backgroundColour", self._backgroundColour)
 
-#SYNTAX HIGHLIGHTING
+    def _reloadAccentColour(self, newColour: str | None) -> None:
+        if not newColour:
+            newColour = self._accentColour
+        self._accentColour = newColour.upper()
+        self._reloadColours()
+        mEditor = self.searchDictionary("EDITOR")["Class"]
+        mEditor.setAccentColour(self._accentColour)
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
 
-#drawing window geometry
-mainFrame = Frame(root, bg="#000080")
-mainFrame.pack(pady=(20, 0), expand=False, fill=X, padx=30)
+    def _loadConfigFile(self) -> None:
+        importData = ScriptIO.readConfigFile()
+        if importData:
+            resultantSet = lineParse(importData)
+            for entry in resultantSet:
+                if entry[0] == "config":
+                    terminal = self.searchDictionary("TERMINAL")
+                    terminal["Class"].startGHCI(entry[1])
+                elif entry[0] == "backgroundColour":
+                    self._reloadBackgroundColour(entry[1])
+                elif entry[0] == "accentColour":
+                    self._reloadAccentColour(entry[1])
 
-TerminalLabel = Label(mainFrame, text="TERMINAL", bg="white", highlightthickness=0)
-TerminalLabel.pack(side=LEFT, padx=2, pady=2)
-TerminalLabel.bind("<Button-1>", lambda event: swapMode("TERMINAL"))
+    def _reloadColours(self):
+        self.__panelBar.config(bg=self._accentColour)
+        self.__root.config(bg=self._backgroundColour)
+        self.__drawSpace.config(bg=self._accentColour)
 
-EditorLabel = Label(mainFrame, text="EDITOR", bg="#D0D0D0", highlightthickness=0)
-EditorLabel.pack(side=LEFT, padx=2, pady=2)
-EditorLabel.bind("<Button-1>", lambda event: swapMode("EDITOR"))
+    def start(self) -> None:
+        """Starts Hasket."""
 
-BlankEntry = Frame(mainFrame, bg="#808080")
-BlankEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=2, pady=2)
+        self.loadPanel("TERMINAL")
+        self.__root.mainloop()
 
-textWidgetFrame = Frame(root, bg="#000080")
-textWidgetFrame.pack(side=BOTTOM, padx=30, expand=True, fill=BOTH, pady=(0, 30))
+    def createPanel(self, textName: str, panelClass: type[GenericPanel]) -> None:
+        """Creates a new panel, and adds it to the panel list.
 
-secondaryTextWidget = Text(textWidgetFrame, bg="white", fg="black", highlightthickness=1, highlightcolor="black", insertbackground="black")
-secondaryTextWidget.bind("<Control-s>", lambda event: saveScript(FILE_TITLE))
-secondaryTextWidget.bind("<Control-Shift-S>", lambda event: saveScript(saveAsScript))
-secondaryTextWidget.bind("<Key>", ModifiedText)
+        Parameters:
+            (str) textName:                ID of the panel to create.
+            type[GenericPanel] panelClass: Class of the panel to create.
+        """
 
-mainTextWidget = Text(textWidgetFrame, bg="black", fg="white", highlightthickness=1, highlightcolor="white", insertbackground="white")
-mainTextWidget.pack(side=LEFT, fill=BOTH, expand=True, padx=(2, 0), pady=(0, 2))
-mainTextWidget.bind("<Return>", lambda event: retrieveInput(False))
+        mTempObject = panelClass(self.__drawSpace)
+        self._panelDictionaries.append({"ID": textName,
+                                        "Class": mTempObject,
+                                        "Label": self._generatePanelLabel(textName)})
+
+    def _generatePanelLabel(self, panelName):
+        self._panels.append(Label(self.__panelBar,
+                                  text=panelName, bg=STATE_INACTIVE, highlightthickness=0))
+        self._panels[-1].pack(side=LEFT, padx=2, pady=2)
+        self._panels[-1].bind("<Button-1>", lambda event: self.swapMode(panelName))
+        return self._panels[-1]
+
+    def _generateWindow(self):
+        self.__root.geometry("800x500")
+        self.__root.config(bg="#404040")
+        self.__root.iconbitmap("HASKET.ico")
+        self.__root.minsize(800, 500)
+        self.__root.title(f"{WINDOW_TITLE} {VERSION}")
+
+        self.__panelBar.pack(pady=(20, 0), expand=False, fill="x", padx=30)
+        self.__paddingBar.pack(side="right", fill="both", expand=True, padx=2, pady=2)
+        self.__drawSpace.pack(side="bottom", padx=30, expand=True, fill="both", pady=(0, 30))
+
+        self.__root.bind("<Control-Tab>", lambda e: self.nextPanel())
+        self.__root.bind("<<Destroy>>", lambda e: self._onDelete())
+
+    def searchDictionary(self, nameID: str) -> type[str, type[GenericPanel], type[Label]] | None:
+        """Searches for a panel with the given ID.
+
+        Parameters:
+            (str) nameID:   ID of the panel to search.
+
+        Returns:
+            type[str, type[GenericPanel], type[Label]]: The entry related to the searched panel.
+            None:  If there is no entry for the given ID.
+        """
+
+        for entry in self._panelDictionaries:
+            if entry["ID"] == nameID:
+                return entry
+        return None
+
+    def unloadCurrentPanel(self) -> None:
+        """Unloads the currently active panel."""
+
+        if self.searchDictionary(self._loadedPanelID):
+            entry = self.searchDictionary(self._loadedPanelID)
+            entry["Class"].unloadPanel()
+            entry["Label"].config(bg=STATE_INACTIVE)
+
+    def loadPanel(self, panelID: str) -> None:
+        """Attempts to load the panel with the given ID."""
+
+        if self.searchDictionary(panelID):
+            entry = self.searchDictionary(panelID)
+            entry["Class"].loadPanel()
+            self._loadedPanelID = panelID
+            entry["Label"].config(bg=STATE_ACTIVE)
+
+    def swapMode(self, newPanel: str) -> None:
+        """Swaps the loaded panel with the panel of given ID."""
+
+        self.unloadCurrentPanel()
+        self.loadPanel(newPanel)
+
+    def nextPanel(self) -> None:
+        """Moves the currently active panel to the next one."""
+
+        if self._loadedPanelID == "UNDEFINED":
+            self.swapMode(self._panelDictionaries[0]["ID"])
+        else:
+            mEntry = self.searchDictionary(self._loadedPanelID)
+            mIndex = self._panelDictionaries.index(mEntry)
+            mIndex = (mIndex + 1) % len(self._panelDictionaries)
+            self.swapMode(self._panelDictionaries[mIndex]["ID"])
+
+    def _onDelete(self):
+        for x in self._panelDictionaries:
+            x["Class"].deletePanel()
+            del x["Class"]
 
 
-root.bind("<Control-Tab>", lambda event: swapMode("EDITOR" if MODE == "TERMINAL" else "TERMINAL"))
-root.bind("<Control-o>", importScriptEntry)
-root.bind("<Control-n>", lambda event: newScript())
+if __name__ == "__main__":
+    mWindow = HasketWindow()
 
-mScrollbar = Scrollbar(textWidgetFrame, orient=VERTICAL, width=20, command=mainTextWidget.yview)
-mScrollbar.pack(side=RIGHT, fill=Y, expand=False, padx=2, pady=(0, 2))
-mainTextWidget.config(yscrollcommand=mScrollbar.set)
+    #Adding a new panel.
+    #mWindow.createPanel("EXAMPLE", SamplePanel)
 
-#MENU CONFIGURATION
-mainMenu = Menu(tearoff=0)
-fileMenu = Menu(mainMenu, tearoff=0) 
-mainMenu.add_cascade(menu=fileMenu, label="File")
-
-#File Menu
-fileMenu.add_command(label="New Script", command=newScript)
-fileMenu.add_command(label="Open Script", command=importScriptEntry)
-fileMenu.add_separator()
-fileMenu.add_command(label="Save", command=lambda: saveScript(FILE_TITLE))
-fileMenu.add_command(label="Save As", command=lambda: saveScript(saveAsScript))
-fileMenu.add_separator()
-fileMenu.add_command(label="Exit", command=root.destroy)
-root.config(menu=mainMenu)
-
-CreateWindowTitle("Untitled")
-
-mProcess = subprocess.Popen(["C:\\HASKELL\\bin\\ghci.exe"], shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-RUNNING = True
-t1 = threading.Thread(target = updater)
-t1.start()
-
-if len(sys.argv) == 2:
-    importScript(sys.argv[1])
-else:
-    newScript()
-
-root.mainloop()
-
-RUNNING = False
-try:
-    mProcess.stdin.write(" :quit\r\n")
-    mProcess.stdin.flush()
-except OSError:
-    pass
-mProcess.kill()
+    mWindow.start()

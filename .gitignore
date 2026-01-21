@@ -1,0 +1,4 @@
+*.hs
+*.cfg
+
+__pycache__
