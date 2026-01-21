@@ -103,7 +103,7 @@ class EditorPanel(GenericPanel):
 
         return wrap
 
-    def _restartEditor(
+    def restartEditor(
             self, scriptPath: str = "",
             scriptName: str = "Untitled", text: str | None = None,
             fromSave: bool = False) -> None:
@@ -138,7 +138,7 @@ class EditorPanel(GenericPanel):
                 fileName=self._scriptPath + self._scriptName,
                 text=self.__editorPanel.get("1.0", "end"))
         if result == 0:
-            self._restartEditor(fileAttr[0], fileAttr[1], fileAttr[2], True)
+            self.restartEditor(fileAttr[0], fileAttr[1], fileAttr[2], True)
 
     def getFilePath(self) -> str:
         """Returns the full path of the file in the editor."""
@@ -148,17 +148,17 @@ class EditorPanel(GenericPanel):
     def newScript(self, *_) -> None:
         """Clears the editor and loads a new script."""
 
-        self._restartEditor("", "Untitled")
+        self.restartEditor("", "Untitled")
 
     @__funcSave
     def openScript(self, *_) -> None:
         """Opens a script and loads it into the editor."""
         paramPath, paramName, text = ScriptIO.importScriptEntry()
         if not (paramPath == "" and paramName == "Untitled"):
-            self._restartEditor(paramPath, paramName, text)
+            self.restartEditor(paramPath, paramName, text)
         else:
-            self._restartEditor(self._scriptPath, self._scriptName,
-                                self.__editorPanel.get("1.0", "end"), True)
+            self.restartEditor(self._scriptPath, self._scriptName,
+                               self.__editorPanel.get("1.0", "end"), True)
 
     @__funcSave
     def deletePanel(self) -> None:

@@ -26,7 +26,7 @@ class ScriptIO:
         foundFile = filedialog.askopenfilename(filetypes=[("Haskell Scripts", ".hs")])
         if not foundFile:
             return "", "Untitled", ""
-        return ScriptIO._importScript(foundFile)
+        return ScriptIO.importScript(foundFile)
 
     @staticmethod
     def __extractPath(itemName: str) -> str:
@@ -41,8 +41,19 @@ class ScriptIO:
         return ""
 
     @staticmethod
-    def _importScript(scriptName: str) -> tuple[str, str, str]:
-        """Imports a script and returns its name and contents."""
+    def importScript(scriptName: str) -> tuple[str, str, str]:
+        """Imports a script and returns its name and contents.
+
+        Parameters:
+            (str) scriptName:
+                The absolute path of a script to load.
+
+        Returns:
+            textVariables (tuple(str, str, str))
+                [0]: File path
+                [1]: File name
+                [2]: File contents
+            """
 
         try:
             with open(scriptName, "r") as mEntry:
@@ -95,7 +106,7 @@ class ScriptIO:
             messagebox.showerror("Error", f"Unable to open file: {fileName}")
             return -1, None
         messagebox.showinfo("Success", f"Successfully saved to file: {fileName}!")
-        return 0, ScriptIO._importScript(fileName)
+        return 0, ScriptIO.importScript(fileName)
 
     @staticmethod
     def _saveAsScript(*_) -> str:

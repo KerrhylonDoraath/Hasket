@@ -73,6 +73,7 @@ class EditorTerminalOut(GenericPanel):
         if self._awaitingCallback:
             self._outputPipe("> Please wait while GHCi reboots...\n")
             return
+
         if possibleLine[0] == "\\":
             self._callCommandLibrary(possibleLine[1:-1])
         else:
@@ -82,6 +83,7 @@ class EditorTerminalOut(GenericPanel):
                 self._outputPipe(possibleLine)  ##pipe it to output
             except OSError:
                 self._outputPipe("> GHCi has closed. Please run \\restart to restart GHCi.\n")
+
     def printOut(self, text: str) -> None:
         self.__mainTextWidget.config(state="normal")
         self.__mainTextWidget.insert("end", text)
@@ -114,7 +116,7 @@ class EditorTerminalOut(GenericPanel):
             self._process.stdin.write(f":load {mEntry}\n")
             self._process.stdin.flush()
         except Exception as e:
-            self._outputPipe(f"> {e}\n")
+            raise e
 
     def _commLoadScript(self, parameters: list[str]) -> None:
         if len(parameters) == 2:
@@ -125,6 +127,10 @@ class EditorTerminalOut(GenericPanel):
             rawIn = parameters[1].encode("unicode_escape").decode()
             self._process.stdin.write(f":load {rawIn}\n")
             self._process.stdin.flush()
+            scriptParameters = ScriptIO.importScript(rawIn)
+            self._boundEditor.restartEditor(scriptParameters[0],
+                                            scriptParameters[1],
+                                            scriptParameters[2])
         elif len(parameters) >= 3:
             self._outputPipe("> Please only specify one script.\n")
         else:
