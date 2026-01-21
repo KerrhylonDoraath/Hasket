@@ -1,11 +1,11 @@
-def lineParse(inputLines: list[str]) -> list[tuple[str, str]]:
+def lineParse(inputLines: list[str]) -> list[list[str]]:
     """Iterates through provided strings
     to separate words by the first ": ".
 
     Parameters
         (list[str]) inputLines: list of strings
 
-    Returns:    list[tuple [str, str]]
+    Returns:    list[list [str]]
     """
 
     resultSet = []

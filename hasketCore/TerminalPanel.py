@@ -161,7 +161,7 @@ class EditorTerminalOut(GenericPanel):
             if mPath:
                 if os.path.isfile(mPath):
                     self._GHCILoc = mPath
-                    ScriptIO.writeConfigFile(f"config: {self._GHCILoc}\n")
+                    ScriptIO.rewriteConfigFile("config", self._GHCILoc)
                     return True
 
         return False

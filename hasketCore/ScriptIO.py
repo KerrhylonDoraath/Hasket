@@ -10,6 +10,7 @@ panels.
 
 from tkinter import filedialog, messagebox
 
+from hasketCore.Utils import lineParse
 
 class ScriptIO:
 
@@ -135,6 +136,27 @@ class ScriptIO:
             return 1
 
     @staticmethod
+    def rewriteConfigFile(parameter: str, newValue: str) -> None:
+        """Updates a parameter in the configuration file."""
+        mPairs = lineParse(ScriptIO.readConfigFile())
+        if not mPairs:
+            ScriptIO.writeConfigFileN(parameter + ":" + newValue)
+        searchIndex = 0
+        found = False
+        for section in mPairs:
+            if section[0] == parameter:
+                mPairs[searchIndex][1] = newValue
+                found = True
+                break
+            searchIndex += 1
+        if not found:
+            mPairs.append([parameter, newValue])
+
+        with open("HaskConf.cfg", "w") as configFile:
+            for section in mPairs:
+                configFile.write(section[0] + ": " + section[1] + "\n")
+
+    @staticmethod
     def writeConfigFileN(inputString: str) -> int:
         """Same as writeConfigFile, just adds a newline character."""
 
@@ -151,6 +173,4 @@ class ScriptIO:
                     mData = configFile.readline()
                 return importData
         except OSError:
-            messagebox.showwarning("Warning",
-                                   "The Hasket configuration file could not be found.")
             return None

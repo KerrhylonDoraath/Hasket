@@ -1,7 +1,8 @@
 ##hasket.py - A pythonic interface for developing haskell.
-
+import tkinter.colorchooser
 # IMPORTS
 from tkinter import *
+#from tkinter import colorchooser
 
 from hasketCore.EditorPanel import EditorPanel
 from hasketCore.GenericPanel import GenericPanel
@@ -18,6 +19,8 @@ CONFIG_FILE_TOKENS = ["config"]
 WINDOW_TITLE = "Hasket"
 VERSION = "1.1"
 
+DEFAULT_PANEL_COLOUR = "#808080"
+DEFAULT_ACCENT_COLOUR = "#000080"
 
 # Main window
 class HasketWindow:
@@ -27,12 +30,16 @@ class HasketWindow:
         self._panelDictionaries = []
         self._loadedPanelID = "UNDEFINED"
 
+        self._backgroundColour = DEFAULT_PANEL_COLOUR
+        self._accentColour = DEFAULT_ACCENT_COLOUR
+
         self.__root = Tk()
-        self.__panelBar = Frame(self.__root, bg="#000080")
-        self.__paddingBar = Frame(self.__panelBar, bg="#808080")
-        self.__drawSpace = Frame(self.__root, bg="#000080")
+        self.__panelBar = Frame(self.__root, bg=self._accentColour)
+        self.__paddingBar = Frame(self.__panelBar, bg=self._backgroundColour)
+        self.__drawSpace = Frame(self.__root, bg=self._accentColour)
 
         self._generateWindow()
+        self._setMenubar()
 
         self.createPanel("TERMINAL", EditorTerminalOut)
         self.createPanel("EDITOR", EditorPanel)
@@ -43,6 +50,39 @@ class HasketWindow:
 
         self._loadConfigFile()
 
+    def _selectAccentColour(self) -> None:
+        self._reloadAccentColour(tkinter.colorchooser.askcolor()[1])
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
+
+    def _selectBackgroundColour(self) -> None:
+        self._reloadBackgroundColour(tkinter.colorchooser.askcolor()[1])
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
+
+    def _setMenubar(self) -> None:
+        menubar = Menu(self.__root)
+        preferences = Menu(menubar, title="Preferences", tearoff=False)
+        preferences.add_command(label="Select Accent Colour", command=self._selectAccentColour)
+        preferences.add_command(label="Select Background Colour", command=self._selectBackgroundColour)
+        menubar.add_cascade(menu=preferences, label="Preferences")
+        self.__root.config(menu=menubar)
+
+
+    def _reloadBackgroundColour(self, newColour: str | None) -> None:
+        if not newColour:
+            newColour = self._backgroundColour
+        self._backgroundColour = newColour
+        self._reloadColours()
+        ScriptIO.rewriteConfigFile("backgroundColour", self._backgroundColour)
+
+    def _reloadAccentColour(self, newColour: str | None) -> None:
+        if not newColour:
+            newColour = self._accentColour
+        self._accentColour = newColour.upper()
+        self._reloadColours()
+        mEditor = self.searchDictionary("EDITOR")["Class"]
+        mEditor.setAccentColour(self._accentColour)
+        ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
+
     def _loadConfigFile(self) -> None:
         importData = ScriptIO.readConfigFile()
         if importData:
@@ -51,6 +91,15 @@ class HasketWindow:
                 if entry[0] == "config":
                     terminal = self.searchDictionary("TERMINAL")
                     terminal["Class"].startGHCI(entry[1])
+                elif entry[0] == "backgroundColour":
+                    self._reloadBackgroundColour(entry[1])
+                elif entry[0] == "accentColour":
+                    self._reloadAccentColour(entry[1])
+
+    def _reloadColours(self):
+        self.__panelBar.config(bg=self._accentColour)
+        self.__root.config(bg=self._backgroundColour)
+        self.__drawSpace.config(bg=self._accentColour)
 
     def start(self) -> None:
         """Starts Hasket."""

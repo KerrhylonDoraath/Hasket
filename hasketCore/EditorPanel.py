@@ -27,7 +27,8 @@ class EditorPanel(GenericPanel):
         self._modified = False
         self._initial = "\n"
         self._ignoreModified = True
-        self.__fileTitleFrame = Frame(master, bg="#000080")
+        self._accentColour = "#000080"
+        self.__fileTitleFrame = Frame(master, bg=self._accentColour)
         self.__fileTitleLabel = Label(master=self.__fileTitleFrame, bg="white",
                                       highlightthickness=1, fg="black",
                                       text=self._scriptName, justify="left")
@@ -86,6 +87,10 @@ class EditorPanel(GenericPanel):
             return messagebox.askyesnocancel("Warning",
                                              f"Save changes to {self._scriptName}?", icon="warning")
         return False
+
+    def setAccentColour(self, accentColour: str) -> None:
+        self._accentColour = accentColour
+        self.__fileTitleFrame.config(bg=self._accentColour)
 
     @staticmethod
     def __funcSave(func: Callable) -> Callable:
