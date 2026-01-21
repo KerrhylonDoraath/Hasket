@@ -72,3 +72,5 @@ Variable names inside of functions do not have to follow any specific naming con
 <i>Note: Inheritance is a key part of including additional window tabs in Hasket.
 If a new tab is created, please implement all base methods. To practice public and non-public standards,
 any mangled names are to be kept mangled. Please do not go into the parent class, I will reject your merge request!</i>
+
+Documentation on creating custom panels may be found [here](resources/creatingPanels.md).
