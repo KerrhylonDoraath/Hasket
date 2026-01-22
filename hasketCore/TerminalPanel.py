@@ -179,7 +179,7 @@ class EditorTerminalOut(GenericPanel):
         else:
             self.startGHCI(self._GHCILoc)
 
-    def commandGHCI(self) -> bool:
+    def _commandGHCI(self) -> bool:
 
         self._process = subprocess.Popen("ghci",
                                          shell=True, stdin=subprocess.PIPE,
@@ -210,7 +210,7 @@ class EditorTerminalOut(GenericPanel):
              False: Could not complete loading.
         """
         if not self._running:
-            if self.commandGHCI():
+            if self._commandGHCI():
                 return True
         valid = self._findGHCI(found)
         if valid:
