@@ -1,6 +1,7 @@
 import os
 import subprocess
 import threading
+import time
 from tkinter import Frame, Text, Scrollbar, TclError
 import tkinter.messagebox
 
@@ -178,6 +179,26 @@ class EditorTerminalOut(GenericPanel):
         else:
             self.startGHCI(self._GHCILoc)
 
+    def commandGHCI(self) -> bool:
+
+        self._process = subprocess.Popen("ghci",
+                                         shell=True, stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                         text=True)
+        iterCount = 20
+        stable = True
+        for _ in range(iterCount):
+            if self._process.poll():
+               stable = False
+            time.sleep(0.001)
+
+        if stable:
+            self._running = True
+            self._GHCIThread = threading.Thread(target=self._updater, daemon=True)
+            self._GHCIThread.start()
+
+        return stable
+
     def startGHCI(self, found: str | None = None) -> bool:
         """Attempts to start GHCi.
 
@@ -189,6 +210,8 @@ class EditorTerminalOut(GenericPanel):
              False: Could not complete loading.
         """
 
+        if self.commandGHCI():
+            return True
         valid = self._findGHCI(found)
         if valid:
             self._process = subprocess.Popen([self._GHCILoc],
