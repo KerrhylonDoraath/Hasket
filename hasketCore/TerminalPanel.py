@@ -209,9 +209,9 @@ class EditorTerminalOut(GenericPanel):
              True: Successfully loaded ghci.
              False: Could not complete loading.
         """
-
-        if self.commandGHCI():
-            return True
+        if not self._running:
+            if self.commandGHCI():
+                return True
         valid = self._findGHCI(found)
         if valid:
             self._process = subprocess.Popen([self._GHCILoc],
