@@ -1,4 +1,4 @@
-from tkinter import Entry, Frame, Tk, Label, Button
+from tkinter import Button, Entry, Frame,  Label, Tk, TclError
 import tkinter.messagebox
 
 
@@ -7,7 +7,10 @@ class __FindInterpreter:
         self.temp = Tk()
         self.temp.title("Locate GHCi")
         self.temp.resizable(False, False)
-        self.temp.iconbitmap("HASKET.ico")
+        try:
+            self.temp.iconbitmap("HASKET.ico")
+        except TclError:
+            pass
         self.temp.geometry("460x125")
         self.temp.config(bg="#404040")
 

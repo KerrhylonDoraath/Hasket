@@ -1,8 +1,7 @@
 ##hasket.py - A pythonic interface for developing haskell.
-import tkinter.colorchooser
 # IMPORTS
-from tkinter import *
-#from tkinter import colorchooser
+from tkinter import Frame, Label, Menu, Tk, TclError
+from tkinter import colorchooser
 
 from hasketCore.EditorPanel import EditorPanel
 from hasketCore.GenericPanel import GenericPanel
@@ -51,11 +50,11 @@ class HasketWindow:
         self._loadConfigFile()
 
     def _selectAccentColour(self) -> None:
-        self._reloadAccentColour(tkinter.colorchooser.askcolor()[1])
+        self._reloadAccentColour(colorchooser.askcolor()[1])
         ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
 
     def _selectBackgroundColour(self) -> None:
-        self._reloadBackgroundColour(tkinter.colorchooser.askcolor()[1])
+        self._reloadBackgroundColour(colorchooser.askcolor()[1])
         ScriptIO.rewriteConfigFile("accentColour", self._accentColour)
 
     def _setMenubar(self) -> None:
@@ -123,14 +122,17 @@ class HasketWindow:
     def _generatePanelLabel(self, panelName):
         self._panels.append(Label(self.__panelBar,
                                   text=panelName, bg=STATE_INACTIVE, highlightthickness=0))
-        self._panels[-1].pack(side=LEFT, padx=2, pady=2)
+        self._panels[-1].pack(side="left", padx=2, pady=2)
         self._panels[-1].bind("<Button-1>", lambda event: self.swapMode(panelName))
         return self._panels[-1]
 
     def _generateWindow(self):
         self.__root.geometry("800x500")
         self.__root.config(bg="#404040")
-        self.__root.iconbitmap("HASKET.ico")
+        try:
+            self.__root.iconbitmap("HASKET.ico")
+        except TclError:
+            pass
         self.__root.minsize(800, 500)
         self.__root.title(f"{WINDOW_TITLE} {VERSION}")
 
