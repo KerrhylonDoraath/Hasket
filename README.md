@@ -12,6 +12,11 @@ extensions of practicality.
 
 This code will run on windows and linux, but I have not tested its ability to execute on MacOS, so I cannot guarantee it will run.
 
+To execute, run command:
+```
+python hasket.py
+```
+
 ## Features
 
 ### The Terminal Window
@@ -77,3 +82,4 @@ any mangled names are to be kept mangled. Please do not go into the parent class
 
 
 Documentation on creating custom panels may be found [here](resources/creatingPanels.md).
+
