@@ -19,6 +19,7 @@ WINDOW_TITLE = "Hasket"
 VERSION = "1.1"
 
 DEFAULT_PANEL_COLOUR = "#808080"
+DEFAULT_BACKGROUND_COLOUR = "#404040"
 DEFAULT_ACCENT_COLOUR = "#000080"
 
 # Main window
@@ -29,12 +30,13 @@ class HasketWindow:
         self._panelDictionaries = []
         self._loadedPanelID = "UNDEFINED"
 
-        self._backgroundColour = DEFAULT_PANEL_COLOUR
+        self._backgroundColour = DEFAULT_BACKGROUND_COLOUR
+        self._panelBackgroundColour = DEFAULT_PANEL_COLOUR
         self._accentColour = DEFAULT_ACCENT_COLOUR
 
         self.__root = Tk()
         self.__panelBar = Frame(self.__root, bg=self._accentColour)
-        self.__paddingBar = Frame(self.__panelBar, bg=self._backgroundColour)
+        self.__paddingBar = Frame(self.__panelBar, bg=self._panelBackgroundColour)
         self.__drawSpace = Frame(self.__root, bg=self._accentColour)
 
         self._generateWindow()
@@ -128,7 +130,7 @@ class HasketWindow:
 
     def _generateWindow(self):
         self.__root.geometry("800x500")
-        self.__root.config(bg="#404040")
+        self.__root.config(bg=DEFAULT_BACKGROUND_COLOUR)
         try:
             self.__root.iconbitmap("HASKET.ico")
         except TclError:
