@@ -9,6 +9,8 @@ def lineParse(inputLines: list[str]) -> list[list[str]]:
     """
 
     resultSet = []
+    if not inputLines:
+        return []
     for line in inputLines:
         scanner = ""
         mode = "keyword"

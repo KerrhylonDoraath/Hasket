@@ -140,7 +140,7 @@ class ScriptIO:
         """Updates a parameter in the configuration file."""
         mPairs = lineParse(ScriptIO.readConfigFile())
         if not mPairs:
-            ScriptIO.writeConfigFileN(parameter + ":" + newValue)
+            ScriptIO.writeConfigFileN(parameter + ": " + newValue)
         searchIndex = 0
         found = False
         for section in mPairs:
